@@ -2,9 +2,9 @@
   "name": "sistema-igreja",
   "version": "1.0.0",
   "description": "Sistema de gestão para igreja com pagamentos e aniversariantes",
-  "main": "server-completo.js",
+  "main": "backend/server.js",
   "scripts": {
-    "start": "node server-completo.js",
+    "start": "node backend/server.js",
     "dev": "node backend/server.js",
     "build": "echo 'Build concluído'"
   },
