@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste de Conexão</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <h2>Teste de Conexão com API</h2>
+    <button onclick="testarConexao()">Testar Health Check</button>
+    <button onclick="testarCadastro()">Testar Cadastro</button>
+    <div id="resultado" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;"></div>
+
+    <script>
+        async function testarConexao() {
+            const resultado = document.getElementById('resultado');
+            resultado.innerHTML = 'Testando conexão...';
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/health');
+                const data = await response.text();
+                resultado.innerHTML = `
+                    <h3>Health Check</h3>
+                    <p>Status: ${response.status}</p>
+                    <p>Resposta: ${data}</p>
+                `;
+            } catch (error) {
+                resultado.innerHTML = `
+                    <h3>Erro na Conexão</h3>
+                    <p style="color: red;">Erro: ${error.message}</p>
+                `;
+            }
+        }
+
+        async function testarCadastro() {
+            const resultado = document.getElementById('resultado');
+            resultado.innerHTML = 'Testando cadastro...';
+            
+            const userData = {
+                nome: 'Teste Usuario',
+                email: 'teste@email.com',
+                telefone: '11999999999',
+                endereco: 'Rua Teste, 123',
+                senha: '123456'
+            };
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userData)
+                });
+                
+                const data = await response.json();
+                resultado.innerHTML = `
+                    <h3>Teste de Cadastro</h3>
+                    <p>Status: ${response.status}</p>
+                    <p>Resposta: ${JSON.stringify(data, null, 2)}</p>
+                `;
+            } catch (error) {
+                resultado.innerHTML = `
+                    <h3>Erro no Cadastro</h3>
+                    <p style="color: red;">Erro: ${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

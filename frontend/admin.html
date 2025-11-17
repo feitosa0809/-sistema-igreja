@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administração - Sistema de Dízimos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="assets/css/style.css" rel="stylesheet">
+    <style>
+        .admin-sidebar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .admin-content {
+            padding: 20px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .stat-card-blue {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .stat-card-green {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+        }
+        .stat-card-orange {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+        }
+        .sidebar-item {
+            cursor: pointer;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 5px 0;
+            transition: all 0.3s ease;
+        }
+        .sidebar-item:hover, .sidebar-item.active {
+            background: rgba(255,255,255,0.1);
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .table-responsive {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .igreja-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 admin-sidebar p-0">
+                <div class="text-center py-4">
+                    <h4><i class="fas fa-church"></i> Admin Igreja</h4>
+                </div>
+                
+                <div class="px-3">
+                    <div class="sidebar-item active" onclick="showSection('dashboard')">
+                        <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                    </div>
+                    <div class="sidebar-item" onclick="showSection('igreja-dados')">
+                        <i class="fas fa-church me-2"></i> Dados da Igreja
+                    </div>
+                    <div class="sidebar-item" onclick="showSection('usuarios')">
+                        <i class="fas fa-users me-2"></i> Usuários
+                    </div>
+                    <div class="sidebar-item" onclick="showSection('financeiro')">
+                        <i class="fas fa-money-bill-wave me-2"></i> Financeiro
+                    </div>
+                    <div class="sidebar-item" onclick="showSection('relatorios')">
+                        <i class="fas fa-chart-bar me-2"></i> Relatórios
+                    </div>
+                    <div class="sidebar-item" onclick="showSection('campanhas')">
+                        <i class="fas fa-bullhorn me-2"></i> Campanhas
+                    </div>
+                    <div class="sidebar-item" onclick="window.location.href='aniversariantes.html'">
+                        <i class="fas fa-birthday-cake me-2"></i> Aniversariantes
+                    </div>
+                    <div class="sidebar-item" onclick="showSection('backup')">
+                        <i class="fas fa-download me-2"></i> Backup
+                    </div>
+                    <div class="sidebar-item" onclick="logout()">
+                        <i class="fas fa-sign-out-alt me-2"></i> Sair
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Content -->
+            <div class="col-md-10 admin-content">
+                
+                <!-- Dashboard -->
+                <div id="dashboard" class="content-section active">
+                    <div class="igreja-info">
+                        <h2><i class="fas fa-church me-3"></i>Igreja Evangélica Esperança</h2>
+                        <p class="mb-0">Sistema de Gestão de Dízimos e Ofertas</p>
+                        <small>Último acesso: <span id="lastAccess"></span></small>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="stat-card stat-card-blue">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6>Total de Usuários</h6>
+                                        <h3 id="totalUsers">0</h3>
+                                    </div>
+                                    <i class="fas fa-users fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card stat-card-green">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6>Total Arrecadado</h6>
+                                        <h3 id="totalAmount">R$ 0,00</h3>
+                                    </div>
+                                    <i class="fas fa-money-bill-wave fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card stat-card-orange">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6>Este Mês</h6>
+                                        <h3 id="monthAmount">R$ 0,00</h3>
+                                    </div>
+                                    <i class="fas fa-calendar-alt fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6>Pendentes</h6>
+                                        <h3 id="pendingCount">0</h3>
+                                    </div>
+                                    <i class="fas fa-clock fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="chart-container">
+                                <h5><i class="fas fa-chart-line me-2"></i>Arrecadação por Mês</h5>
+                                <canvas id="monthlyChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="chart-container">
+                                <h5><i class="fas fa-pie-chart me-2"></i>Tipos de Contribuição</h5>
+                                <canvas id="pieChart" width="200" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Dados da Igreja -->
+                <div id="igreja-dados" class="content-section">
+                    <h2><i class="fas fa-church me-2"></i>Dados da Igreja</h2>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-edit me-2"></i>Informações da Igreja</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form id="igrejaForm">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Nome da Igreja</label>
+                                                    <input type="text" class="form-control" id="nomeIgreja" value="Igreja Evangélica Esperança">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">CNPJ</label>
+                                                    <input type="text" class="form-control" id="cnpjIgreja" placeholder="00.000.000/0000-00">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Endereço</label>
+                                            <input type="text" class="form-control" id="enderecoIgreja" placeholder="Rua, número, bairro">
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Cidade</label>
+                                                    <input type="text" class="form-control" id="cidadeIgreja">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Estado</label>
+                                                    <select class="form-control" id="estadoIgreja">
+                                                        <option value="">Selecione...</option>
+                                                        <option value="SP">São Paulo</option>
+                                                        <option value="RJ">Rio de Janeiro</option>
+                                                        <option value="MG">Minas Gerais</option>
+                                                        <!-- Adicionar outros estados -->
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="mb-3">
+                                                    <label class="form-label">CEP</label>
+                                                    <input type="text" class="form-control" id="cepIgreja" placeholder="00000-000">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Telefone</label>
+                                                    <input type="text" class="form-control" id="telefoneIgreja" placeholder="(00) 0000-0000">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Email</label>
+                                                    <input type="email" class="form-control" id="emailIgreja" placeholder="contato@igreja.com">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Pastor Responsável</label>
+                                            <input type="text" class="form-control" id="pastorIgreja" placeholder="Nome do pastor">
+                                        </div>
+                                        
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save me-2"></i>Salvar Alterações
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-cog me-2"></i>Configurações</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Moeda</label>
+                                        <select class="form-control">
+                                            <option>Real (R$)</option>
+                                            <option>Dólar (US$)</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Fuso Horário</label>
+                                        <select class="form-control">
+                                            <option>America/Sao_Paulo</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="notificacoes">
+                                        <label class="form-check-label" for="notificacoes">
+                                            Receber notificações por email
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="backup_auto">
+                                        <label class="form-check-label" for="backup_auto">
+                                            Backup automático
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Usuários -->
+                <div id="usuarios" class="content-section">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2><i class="fas fa-users me-2"></i>Gestão de Usuários</h2>
+                        <button class="btn btn-primary" onclick="showAddUserModal()">
+                            <i class="fas fa-plus me-2"></i>Novo Usuário
+                        </button>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped" id="usersTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Nome</th>
+                                            <th>Email</th>
+                                            <th>Tipo</th>
+                                            <th>Status</th>
+                                            <th>Cadastro</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Dados carregados via JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Financeiro -->
+                <div id="financeiro" class="content-section">
+                    <h2><i class="fas fa-money-bill-wave me-2"></i>Gestão Financeira</h2>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-list me-2"></i>Transações Pendentes</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table" id="pendingTransactions">
+                                            <thead>
+                                                <tr>
+                                                    <th>Usuário</th>
+                                                    <th>Tipo</th>
+                                                    <th>Valor</th>
+                                                    <th>Data</th>
+                                                    <th>Ações</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- Dados carregados via JavaScript -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-chart-pie me-2"></i>Resumo Mensal</h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <div class="mb-3">
+                                        <h6>Dízimos</h6>
+                                        <h4 class="text-primary" id="monthlyTithes">R$ 0,00</h4>
+                                    </div>
+                                    <div class="mb-3">
+                                        <h6>Ofertas</h6>
+                                        <h4 class="text-success" id="monthlyOfferings">R$ 0,00</h4>
+                                    </div>
+                                    <div class="mb-3">
+                                        <h6>Total</h6>
+                                        <h3 class="text-info" id="monthlyTotal">R$ 0,00</h3>
+                                    </div>
+                                    <button class="btn btn-outline-primary btn-sm" onclick="exportFinancial()">
+                                        <i class="fas fa-download me-1"></i>Exportar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Relatórios -->
+                <div id="relatorios" class="content-section">
+                    <h2><i class="fas fa-chart-bar me-2"></i>Relatórios</h2>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <i class="fas fa-calendar-month fa-3x text-primary mb-3"></i>
+                                    <h5>Relatório Mensal</h5>
+                                    <p>Dízimos e ofertas do mês</p>
+                                    <button class="btn btn-primary" onclick="generateReport('monthly')">
+                                        <i class="fas fa-download me-2"></i>Gerar PDF
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <i class="fas fa-calendar-year fa-3x text-success mb-3"></i>
+                                    <h5>Relatório Anual</h5>
+                                    <p>Resumo completo do ano</p>
+                                    <button class="btn btn-success" onclick="generateReport('yearly')">
+                                        <i class="fas fa-download me-2"></i>Gerar PDF
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <i class="fas fa-users fa-3x text-info mb-3"></i>
+                                    <h5>Relatório de Membros</h5>
+                                    <p>Lista de contribuintes</p>
+                                    <button class="btn btn-info" onclick="generateReport('members')">
+                                        <i class="fas fa-download me-2"></i>Gerar PDF
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Filtros de Relatório</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Período</label>
+                                        <select class="form-control" id="reportPeriod">
+                                            <option value="month">Este mês</option>
+                                            <option value="quarter">Este trimestre</option>
+                                            <option value="year">Este ano</option>
+                                            <option value="custom">Personalizado</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Tipo</label>
+                                        <select class="form-control" id="reportType">
+                                            <option value="all">Todos</option>
+                                            <option value="dizimo">Apenas Dízimos</option>
+                                            <option value="oferta">Apenas Ofertas</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <button class="btn btn-outline-primary" onclick="generateCustomReport()">
+                                        <i class="fas fa-file-alt me-2"></i>Gerar Relatório Personalizado
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Estatísticas Rápidas</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row text-center">
+                                        <div class="col-6">
+                                            <h6>Maior Doação</h6>
+                                            <h4 class="text-success" id="maxDonation">R$ 0,00</h4>
+                                        </div>
+                                        <div class="col-6">
+                                            <h6>Média Mensal</h6>
+                                            <h4 class="text-info" id="avgMonthly">R$ 0,00</h4>
+                                        </div>
+                                    </div>
+                                    <div class="row text-center mt-3">
+                                        <div class="col-6">
+                                            <h6>Contribuintes Ativos</h6>
+                                            <h4 class="text-primary" id="activeMembers">0</h4>
+                                        </div>
+                                        <div class="col-6">
+                                            <h6>Taxa de Crescimento</h6>
+                                            <h4 class="text-warning" id="growthRate">0%</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Campanhas -->
+                <div id="campanhas" class="content-section">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2><i class="fas fa-bullhorn me-2"></i>Campanhas e Projetos</h2>
+                        <button class="btn btn-primary" onclick="showAddCampaignModal()">
+                            <i class="fas fa-plus me-2"></i>Nova Campanha
+                        </button>
+                    </div>
+                    
+                    <div class="row" id="campaignsContainer">
+                        <!-- Campanhas carregadas via JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- Backup -->
+                <div id="backup" class="content-section">
+                    <h2><i class="fas fa-download me-2"></i>Backup e Segurança</h2>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-database me-2"></i>Backup dos Dados</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>Faça backup de todos os dados do sistema.</p>
+                                    <button class="btn btn-primary" onclick="downloadBackup()">
+                                        <i class="fas fa-download me-2"></i>Download Backup
+                                    </button>
+                                    
+                                    <hr>
+                                    
+                                    <p>Restaurar backup:</p>
+                                    <input type="file" class="form-control" id="backupFile" accept=".json">
+                                    <button class="btn btn-warning mt-2" onclick="restoreBackup()">
+                                        <i class="fas fa-upload me-2"></i>Restaurar Backup
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-shield-alt me-2"></i>Histórico de Backups</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="list-group" id="backupHistory">
+                                        <!-- Histórico carregado via JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/admin.js"></script>
+</body>
+</html>

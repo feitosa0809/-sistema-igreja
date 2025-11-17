@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💰 Área de Pagamentos - Dízimos</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        
+        .payment-container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+        
+        .header-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+        
+        .header-card h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .payment-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 15px;
+            border: 2px solid #e0e0e0;
+            padding: 15px;
+            font-size: 16px;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 15px;
+            padding: 15px 30px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #5a6fd8, #6a4190);
+        }
+        
+        .payment-method {
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .payment-method:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        
+        .payment-method.selected {
+            border-color: #667eea;
+            background: #f8f9ff;
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .payment-method.selected::before {
+            content: "✓";
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .payment-method i {
+            font-size: 2rem;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .value-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .value-btn {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .value-btn:hover, .value-btn.selected {
+            border-color: #667eea;
+            background: #f8f9ff;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .alert {
+            border-radius: 15px;
+            border: none;
+        }
+        
+        .history-item {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 5px solid #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="payment-container">
+        <!-- Header -->
+        <div class="header-card">
+            <h2><i class="fas fa-church"></i> Área de Pagamentos</h2>
+            <p class="text-muted mb-0">Sistema de Dízimos e Ofertas</p>
+        </div>
+
+        <!-- User Status -->
+        <div class="payment-card">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h5><i class="fas fa-user"></i> Status do Usuário</h5>
+                    <div id="userStatus">
+                        <span class="badge bg-warning">Faça login para continuar</span>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-outline-primary" onclick="mostrarLogin()">
+                        <i class="fas fa-sign-in-alt"></i> Fazer Login
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login Modal -->
+        <div id="loginSection" class="payment-card" style="display: none;">
+            <h5><i class="fas fa-sign-in-alt"></i> Login</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="loginEmail" value="joao@teste.com" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Senha</label>
+                            <input type="password" class="form-control" id="loginPassword" value="123456" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-sign-in-alt"></i> Entrar
+                        </button>
+                    </form>
+                </div>
+                <div class="col-md-6">
+                    <div class="alert alert-info">
+                        <strong>Usuário de teste:</strong><br>
+                        Email: joao@teste.com<br>
+                        Senha: 123456
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Form -->
+        <div id="paymentSection" class="payment-card" style="display: none;">
+            <h5><i class="fas fa-credit-card"></i> Registrar Dízimo/Oferta</h5>
+            
+            <!-- Valores Sugeridos -->
+            <div class="mb-4">
+                <label class="form-label">Valores Sugeridos</label>
+                <div class="value-buttons">
+                    <div class="value-btn" onclick="selecionarValor(25)">R$ 25,00</div>
+                    <div class="value-btn" onclick="selecionarValor(50)">R$ 50,00</div>
+                    <div class="value-btn" onclick="selecionarValor(100)">R$ 100,00</div>
+                    <div class="value-btn" onclick="selecionarValor(200)">R$ 200,00</div>
+                    <div class="value-btn" onclick="selecionarValor(500)">R$ 500,00</div>
+                    <div class="value-btn" onclick="document.getElementById('customValue').focus()">Outro</div>
+                </div>
+            </div>
+
+            <form id="paymentForm">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Valor (R$)</label>
+                            <input type="number" class="form-control" id="customValue" step="0.01" min="1" placeholder="0,00" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Tipo</label>
+                            <select class="form-select" id="paymentType" required>
+                                <option value="">Selecione...</option>
+                                <option value="dizimo">Dízimo</option>
+                                <option value="oferta">Oferta</option>
+                                <option value="campanha">Campanha</option>
+                                <option value="missoes">Missões</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Métodos de Pagamento -->
+                <div class="mb-4 payment-methods-section">
+                    <label class="form-label">Forma de Pagamento <span class="text-danger">*</span></label>
+                    <div class="row">
+                        <div class="col-md-3 col-6">
+                            <div class="payment-method" onclick="selecionarMetodo('pix')">
+                                <div class="text-center">
+                                    <i class="fas fa-qrcode"></i>
+                                    <div><strong>PIX</strong></div>
+                                    <small>Instantâneo</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="payment-method" onclick="selecionarMetodo('dinheiro')">
+                                <div class="text-center">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                    <div><strong>Dinheiro</strong></div>
+                                    <small>Presencial</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="payment-method" onclick="selecionarMetodo('cartao')">
+                                <div class="text-center">
+                                    <i class="fas fa-credit-card"></i>
+                                    <div><strong>Cartão</strong></div>
+                                    <small>Débito/Crédito</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="payment-method" onclick="selecionarMetodo('transferencia')">
+                                <div class="text-center">
+                                    <i class="fas fa-university"></i>
+                                    <div><strong>Transferência</strong></div>
+                                    <small>TED/DOC</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="selectedMethod" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Observações (opcional)</label>
+                    <textarea class="form-control" id="paymentNotes" rows="3" placeholder="Comentários sobre o pagamento..."></textarea>
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-check"></i> Confirmar Pagamento
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Histórico -->
+        <div id="historySection" class="payment-card" style="display: none;">
+            <h5><i class="fas fa-history"></i> Histórico de Pagamentos</h5>
+            <div id="paymentHistory"></div>
+        </div>
+
+        <!-- Resultado -->
+        <div id="resultado" class="alert" style="display: none;"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        const API_BASE = 'http://192.168.4.12:3000/api';
+        let authToken = null;
+        let currentUser = null;
+
+        // Verificar se já está logado
+        window.addEventListener('load', () => {
+            const token = localStorage.getItem('authToken');
+            const user = localStorage.getItem('currentUser');
+            
+            if (token && user) {
+                authToken = token;
+                currentUser = JSON.parse(user);
+                mostrarAreaPagamento();
+            }
+        });
+
+        function mostrarLogin() {
+            document.getElementById('loginSection').style.display = 'block';
+        }
+
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            mostrarResultado('Fazendo login...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: document.getElementById('loginEmail').value,
+                        senha: document.getElementById('loginPassword').value
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    authToken = data.token;
+                    currentUser = data.user;
+                    localStorage.setItem('authToken', authToken);
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    
+                    mostrarResultado(`✅ Login realizado! Bem-vindo, ${data.user.nome}!`, 'success');
+                    mostrarAreaPagamento();
+                } else {
+                    mostrarResultado(`❌ Erro: ${data.error}`, 'danger');
+                }
+            } catch (error) {
+                mostrarResultado(`❌ Erro de conexão: ${error.message}`, 'danger');
+            }
+        });
+
+        function mostrarAreaPagamento() {
+            document.getElementById('userStatus').innerHTML = `
+                <span class="badge bg-success">✅ Logado como ${currentUser.nome}</span>
+            `;
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('paymentSection').style.display = 'block';
+            document.getElementById('historySection').style.display = 'block';
+            carregarHistorico();
+        }
+
+        function selecionarValor(valor) {
+            document.getElementById('customValue').value = valor;
+            document.querySelectorAll('.value-btn').forEach(btn => btn.classList.remove('selected'));
+            event.target.classList.add('selected');
+        }
+
+        function selecionarMetodo(metodo) {
+            // Remove seleção anterior
+            document.querySelectorAll('.payment-method').forEach(pm => pm.classList.remove('selected'));
+            // Adiciona seleção ao método clicado
+            event.currentTarget.classList.add('selected');
+            // Define o valor no campo hidden
+            document.getElementById('selectedMethod').value = metodo;
+            
+            // Debug
+            console.log('Método selecionado:', metodo);
+        }
+
+        // Pagamento
+        document.getElementById('paymentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!authToken) {
+                mostrarResultado('❌ Faça login primeiro!', 'danger');
+                return;
+            }
+            
+            const valor = parseFloat(document.getElementById('customValue').value);
+            const tipo = document.getElementById('paymentType').value;
+            const metodo = document.getElementById('selectedMethod').value;
+            const observacoes = document.getElementById('paymentNotes').value;
+            
+            // Validações detalhadas
+            if (!valor || valor <= 0) {
+                mostrarResultado('❌ Informe um valor válido!', 'danger');
+                document.getElementById('customValue').focus();
+                return;
+            }
+            
+            if (!tipo) {
+                mostrarResultado('❌ Selecione o tipo de contribuição!', 'danger');
+                document.getElementById('paymentType').focus();
+                return;
+            }
+            
+            if (!metodo) {
+                mostrarResultado('❌ Selecione uma forma de pagamento!', 'danger');
+                // Destacar área de métodos de pagamento
+                document.querySelector('.payment-methods-section').scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+            
+            mostrarResultado('💰 Processando pagamento...', 'info');
+            
+            try {
+                console.log('Enviando dados:', { valor, tipo, metodo, observacoes });
+                
+                const response = await fetch(`${API_BASE}/donations`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        valor: valor,
+                        tipo: tipo,
+                        metodo_pagamento: metodo,
+                        observacoes: observacoes,
+                        data_doacao: new Date().toISOString().split('T')[0]
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('Resposta do servidor:', data);
+                
+                if (response.ok) {
+                    mostrarResultado(`🎉 Pagamento registrado com sucesso!<br>
+                        <strong>ID:</strong> ${data.id}<br>
+                        <strong>Valor:</strong> R$ ${valor.toFixed(2)}<br>
+                        <strong>Tipo:</strong> ${tipo}<br>
+                        <strong>Método:</strong> ${metodo}`, 'success');
+                    
+                    // Limpar formulário
+                    document.getElementById('paymentForm').reset();
+                    document.getElementById('selectedMethod').value = '';
+                    document.querySelectorAll('.payment-method').forEach(pm => pm.classList.remove('selected'));
+                    document.querySelectorAll('.value-btn').forEach(btn => btn.classList.remove('selected'));
+                    
+                    // Recarregar histórico
+                    setTimeout(() => {
+                        carregarHistorico();
+                    }, 1000);
+                    
+                } else {
+                    mostrarResultado(`❌ Erro ao registrar pagamento:<br>${data.error || data.message}`, 'danger');
+                }
+            } catch (error) {
+                console.error('Erro de conexão:', error);
+                mostrarResultado(`❌ Erro de conexão: ${error.message}`, 'danger');
+            }
+        });
+
+        async function carregarHistorico() {
+            if (!authToken) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/donations`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    const historyDiv = document.getElementById('paymentHistory');
+                    if (data.length === 0) {
+                        historyDiv.innerHTML = '<p class="text-muted">Nenhum pagamento registrado ainda.</p>';
+                    } else {
+                        historyDiv.innerHTML = data.map(pagamento => `
+                            <div class="history-item">
+                                <div class="row">
+                                    <div class="col">
+                                        <strong>R$ ${parseFloat(pagamento.valor).toFixed(2)}</strong>
+                                        <span class="badge bg-primary ms-2">${pagamento.tipo}</span>
+                                    </div>
+                                    <div class="col-auto">
+                                        <small class="text-muted">${new Date(pagamento.data_doacao).toLocaleDateString('pt-BR')}</small>
+                                    </div>
+                                </div>
+                                <div class="mt-1">
+                                    <small><i class="fas fa-credit-card"></i> ${pagamento.metodo_pagamento}</small>
+                                    ${pagamento.observacoes ? `<br><small class="text-muted">${pagamento.observacoes}</small>` : ''}
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao carregar histórico:', error);
+            }
+        }
+
+        function mostrarResultado(mensagem, tipo) {
+            const div = document.getElementById('resultado');
+            div.className = `alert alert-${tipo}`;
+            div.innerHTML = mensagem;
+            div.style.display = 'block';
+            
+            setTimeout(() => {
+                div.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+{
+  "name": "sistema-igreja",
+  "version": "1.0.0",
+  "description": "Sistema de gestão para igreja com pagamentos e aniversariantes",
+  "main": "server-completo.js",
+  "scripts": {
+    "start": "node server-completo.js",
+    "dev": "node backend/server.js",
+    "build": "echo 'Build concluído'"
+  },
+  "keywords": ["igreja", "pagamentos", "dizimo", "aniversariantes"],
+  "author": "",
+  "license": "ISC",
+  "engines": {
+    "node": ">=14.x"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "better-sqlite3": "^9.2.2"
+  }
+}

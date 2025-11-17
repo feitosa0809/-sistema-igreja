@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <rect width="48" height="48" fill="#007bff" rx="20"/>
+  <text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="white" 
+        font-family="Arial, sans-serif" font-size="14.399999999999999" font-weight="bold">
+    ⛪
+  </text>
+  <text x="50%" y="75%" text-anchor="middle" dy=".3em" fill="white" 
+        font-family="Arial, sans-serif" font-size="4.800000000000001" font-weight="bold">
+    IGREJA
+  </text>
+</svg>
