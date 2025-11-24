@@ -19,12 +19,20 @@ async function initializeDatabase() {
         telefone TEXT,
         endereco TEXT,
         data_nascimento DATE,
+        foto_perfil TEXT,
         tipo_usuario TEXT DEFAULT 'membro' CHECK(tipo_usuario IN ('membro', 'tesoureiro', 'pastor', 'admin')),
         status TEXT DEFAULT 'ativo' CHECK(status IN ('ativo', 'inativo')),
         data_cadastro DATETIME DEFAULT CURRENT_TIMESTAMP,
         data_atualizacao DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    // Adicionar coluna foto_perfil se não existir (para bancos existentes)
+    db.run(`ALTER TABLE usuarios ADD COLUMN foto_perfil TEXT`, (err) => {
+      if (err && !err.message.includes('duplicate column')) {
+        console.error('Erro ao adicionar coluna foto_perfil:', err);
+      }
+    });
 
     // Criar tabela de dízimos
     db.run(`

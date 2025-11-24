@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>👤 Meu Perfil</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        
+        .profile-container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+        
+        .profile-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        
+        .profile-header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .profile-photo-container {
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        
+        .profile-photo {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid #667eea;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .form-control, .form-select {
+            border-radius: 15px;
+            border: 2px solid #e0e0e0;
+            padding: 15px;
+            font-size: 16px;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 15px;
+            padding: 15px 30px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #5a6fd8, #6a4190);
+        }
+        
+        .btn-secondary {
+            border-radius: 15px;
+            padding: 15px 30px;
+            font-weight: bold;
+        }
+        
+        .section-title {
+            color: #667eea;
+            font-weight: bold;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-container">
+        <!-- Header -->
+        <div class="profile-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2><i class="fas fa-user-circle"></i> Meu Perfil</h2>
+                <a href="pagamentos.html" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </a>
+            </div>
+        </div>
+
+        <!-- Foto de Perfil -->
+        <div class="profile-card">
+            <div class="profile-header">
+                <div class="profile-photo-container">
+                    <img id="profilePhoto" src="https://ui-avatars.com/api/?name=Usuario&size=150&background=667eea&color=fff" 
+                         alt="Foto de Perfil" class="profile-photo">
+                </div>
+                <h3 id="profileName">Carregando...</h3>
+                <p class="text-muted" id="profileEmail"></p>
+            </div>
+        </div>
+
+        <!-- Dados Pessoais -->
+        <div class="profile-card">
+            <h4 class="section-title"><i class="fas fa-id-card"></i> Dados Pessoais</h4>
+            <form id="profileForm">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label"><strong>Nome Completo</strong></label>
+                        <input type="text" class="form-control" id="nome" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label"><strong>Email</strong></label>
+                        <input type="email" class="form-control" id="email" required>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label"><strong>Telefone</strong></label>
+                        <input type="tel" class="form-control" id="telefone" placeholder="(00) 00000-0000">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label"><strong>Data de Nascimento</strong></label>
+                        <input type="date" class="form-control" id="dataNascimento">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"><strong>Endereço</strong></label>
+                    <input type="text" class="form-control" id="endereco" placeholder="Rua, Número, Bairro, Cidade">
+                </div>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-save"></i> Salvar Alterações
+                </button>
+            </form>
+        </div>
+
+        <!-- Alterar Senha -->
+        <div class="profile-card">
+            <h4 class="section-title"><i class="fas fa-lock"></i> Alterar Senha</h4>
+            <form id="passwordForm">
+                <div class="mb-3">
+                    <label class="form-label"><strong>Senha Atual</strong></label>
+                    <input type="password" class="form-control" id="senhaAtual" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"><strong>Nova Senha</strong></label>
+                    <input type="password" class="form-control" id="novaSenha" required minlength="6">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"><strong>Confirmar Nova Senha</strong></label>
+                    <input type="password" class="form-control" id="confirmarSenha" required minlength="6">
+                </div>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-key"></i> Alterar Senha
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/config.js"></script>
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = 'index.html';
+        }
+
+        // Carregar dados do perfil
+        async function carregarPerfil() {
+            try {
+                const response = await fetch(`${CONFIG.API_BASE_URL}/users/profile`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const user = data.user;
+
+                    document.getElementById('profileName').textContent = user.nome;
+                    document.getElementById('profileEmail').textContent = user.email;
+                    document.getElementById('nome').value = user.nome;
+                    document.getElementById('email').value = user.email;
+                    document.getElementById('telefone').value = user.telefone || '';
+                    document.getElementById('endereco').value = user.endereco || '';
+                    document.getElementById('dataNascimento').value = user.data_nascimento || '';
+
+                    // Atualizar foto de perfil com avatar de iniciais
+                    document.getElementById('profilePhoto').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nome)}&size=150&background=667eea&color=fff`;
+                } else {
+                    alert('Erro ao carregar perfil');
+                    window.location.href = 'index.html';
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao carregar perfil');
+            }
+        }
+
+        // Salvar perfil
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const dados = {
+                nome: document.getElementById('nome').value,
+                email: document.getElementById('email').value,
+                telefone: document.getElementById('telefone').value,
+                endereco: document.getElementById('endereco').value,
+                data_nascimento: document.getElementById('dataNascimento').value
+            };
+
+            try {
+                const response = await fetch(`${CONFIG.API_BASE_URL}/users/profile`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dados)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Perfil atualizado com sucesso!');
+                    carregarPerfil();
+                } else {
+                    alert(data.error || 'Erro ao atualizar perfil');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao atualizar perfil');
+            }
+        });
+
+        // Alterar senha
+        document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const senhaAtual = document.getElementById('senhaAtual').value;
+            const novaSenha = document.getElementById('novaSenha').value;
+            const confirmarSenha = document.getElementById('confirmarSenha').value;
+
+            if (novaSenha !== confirmarSenha) {
+                alert('As senhas não conferem!');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${CONFIG.API_BASE_URL}/users/password`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        senha_atual: senhaAtual,
+                        nova_senha: novaSenha
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Senha alterada com sucesso!');
+                    document.getElementById('passwordForm').reset();
+                } else {
+                    alert(data.error || 'Erro ao alterar senha');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao alterar senha');
+            }
+        });
+
+        // Carregar perfil ao iniciar
+        carregarPerfil();
+    </script>
+</body>
+</html>
