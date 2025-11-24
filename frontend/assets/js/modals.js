@@ -2,7 +2,7 @@
 function showNovoDizimoModal() {
     const modalHtml = `
         <div class="modal fade" id="novoDizimoModal" tabindex="-1">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Novo Dízimo</h5>
@@ -20,14 +20,63 @@ function showNovoDizimoModal() {
                             </div>
                             <div class="mb-3">
                                 <label for="dizimoMetodo" class="form-label">Método de Pagamento</label>
-                                <select class="form-select" id="dizimoMetodo" required>
+                                <select class="form-select" id="dizimoMetodo" required onchange="handleMetodoChange('dizimo')">
                                     <option value="">Selecione...</option>
-                                    <option value="dinheiro">Dinheiro</option>
                                     <option value="pix">PIX</option>
                                     <option value="cartao">Cartão</option>
                                     <option value="transferencia">Transferência</option>
                                 </select>
                             </div>
+                            
+                            <!-- PIX QR Code Section -->
+                            <div id="dizimo-pix-section" style="display: none;" class="mb-3">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-qrcode"></i> Pagar com PIX</h6>
+                                    <div class="text-center my-3" id="dizimo-qrcode"></div>
+                                    <p class="small mb-2"><strong>Chave PIX:</strong></p>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="dizimo-pix-key" value="igreja@exemplo.com.br" readonly>
+                                        <button class="btn btn-outline-secondary" type="button" onclick="copyPixKey('dizimo')">
+                                            <i class="fas fa-copy"></i> Copiar
+                                        </button>
+                                    </div>
+                                    <small class="text-muted d-block mt-2">Após realizar o pagamento, anexe o comprovante abaixo</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Cartão Section -->
+                            <div id="dizimo-cartao-section" style="display: none;" class="mb-3">
+                                <div class="card">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6 class="mb-0"><i class="fas fa-credit-card"></i> Dados do Cartão</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Número do Cartão</label>
+                                            <input type="text" class="form-control" id="dizimo-card-number" 
+                                                   placeholder="0000 0000 0000 0000" maxlength="19">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Nome no Cartão</label>
+                                            <input type="text" class="form-control" id="dizimo-card-name" 
+                                                   placeholder="NOME COMO NO CARTÃO">
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Validade</label>
+                                                <input type="text" class="form-control" id="dizimo-card-expiry" 
+                                                       placeholder="MM/AA" maxlength="5">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">CVV</label>
+                                                <input type="text" class="form-control" id="dizimo-card-cvv" 
+                                                       placeholder="000" maxlength="4">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <div class="mb-3">
                                 <label for="dizimoComprovante" class="form-label">Comprovante (opcional)</label>
                                 <input type="file" class="form-control" id="dizimoComprovante" accept="image/*">
@@ -99,13 +148,61 @@ function showNovaOfertaModal() {
                             </div>
                             <div class="mb-3">
                                 <label for="ofertaMetodo" class="form-label">Método de Pagamento</label>
-                                <select class="form-select" id="ofertaMetodo" required>
+                                <select class="form-select" id="ofertaMetodo" required onchange="handleMetodoChange('oferta')">
                                     <option value="">Selecione...</option>
-                                    <option value="dinheiro">Dinheiro</option>
                                     <option value="pix">PIX</option>
                                     <option value="cartao">Cartão</option>
                                     <option value="transferencia">Transferência</option>
                                 </select>
+                            </div>
+                            
+                            <!-- PIX QR Code Section -->
+                            <div id="oferta-pix-section" style="display: none;" class="mb-3">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-qrcode"></i> Pagar com PIX</h6>
+                                    <div class="text-center my-3" id="oferta-qrcode"></div>
+                                    <p class="small mb-2"><strong>Chave PIX:</strong></p>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="oferta-pix-key" value="igreja@exemplo.com.br" readonly>
+                                        <button class="btn btn-outline-secondary" type="button" onclick="copyPixKey('oferta')">
+                                            <i class="fas fa-copy"></i> Copiar
+                                        </button>
+                                    </div>
+                                    <small class="text-muted d-block mt-2">Após realizar o pagamento, anexe o comprovante abaixo</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Cartão Section -->
+                            <div id="oferta-cartao-section" style="display: none;" class="mb-3">
+                                <div class="card">
+                                    <div class="card-header bg-success text-white">
+                                        <h6 class="mb-0"><i class="fas fa-credit-card"></i> Dados do Cartão</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Número do Cartão</label>
+                                            <input type="text" class="form-control" id="oferta-card-number" 
+                                                   placeholder="0000 0000 0000 0000" maxlength="19">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Nome no Cartão</label>
+                                            <input type="text" class="form-control" id="oferta-card-name" 
+                                                   placeholder="NOME COMO NO CARTÃO">
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Validade</label>
+                                                <input type="text" class="form-control" id="oferta-card-expiry" 
+                                                       placeholder="MM/AA" maxlength="5">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">CVV</label>
+                                                <input type="text" class="form-control" id="oferta-card-cvv" 
+                                                       placeholder="000" maxlength="4">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             <div class="mb-3">
                                 <label for="ofertaComprovante" class="form-label">Comprovante (opcional)</label>
@@ -237,3 +334,71 @@ function hideModal(modalId) {
         }
     }
 }
+
+// Função para controlar exibição de seções de pagamento
+function handleMetodoChange(tipo) {
+    const metodo = document.getElementById(`${tipo}Metodo`).value;
+    
+    // Esconder todas as seções
+    const pixSection = document.getElementById(`${tipo}-pix-section`);
+    const cartaoSection = document.getElementById(`${tipo}-cartao-section`);
+    
+    if (pixSection) pixSection.style.display = 'none';
+    if (cartaoSection) cartaoSection.style.display = 'none';
+    
+    // Mostrar seção correspondente
+    if (metodo === 'pix' && pixSection) {
+        pixSection.style.display = 'block';
+        generateQRCode(tipo);
+    } else if (metodo === 'cartao' && cartaoSection) {
+        cartaoSection.style.display = 'block';
+    }
+}
+
+// Gerar QR Code para PIX
+function generateQRCode(tipo) {
+    const valor = document.getElementById(`${tipo}Valor`)?.value || '0.00';
+    const chavePix = 'igreja@exemplo.com.br'; // Substituir pela chave real
+    
+    // Dados PIX simplificados (EMV QR Code seria mais complexo)
+    const pixData = `PIX:${chavePix}:${valor}`;
+    
+    // Gerar QR Code usando API externa (qrserver.com)
+    const qrcodeContainer = document.getElementById(`${tipo}-qrcode`);
+    if (qrcodeContainer) {
+        qrcodeContainer.innerHTML = `
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(pixData)}" 
+                 alt="QR Code PIX" class="img-fluid">
+        `;
+    }
+}
+
+// Copiar chave PIX
+function copyPixKey(tipo) {
+    const pixKeyInput = document.getElementById(`${tipo}-pix-key`);
+    if (pixKeyInput) {
+        pixKeyInput.select();
+        document.execCommand('copy');
+        showToast('Chave PIX copiada!', 'success');
+    }
+}
+
+// Formatar número do cartão
+document.addEventListener('DOMContentLoaded', () => {
+    // Adicionar formatação para campos de cartão quando existirem
+    const formatCardNumber = (input) => {
+        let value = input.value.replace(/\s/g, '');
+        let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+        input.value = formattedValue;
+    };
+    
+    const formatExpiry = (input) => {
+        let value = input.value.replace(/\D/g, '');
+        if (value.length >= 2) {
+            value = value.slice(0, 2) + '/' + value.slice(2, 4);
+        }
+        input.value = value;
+    };
+    
+    // Listeners serão adicionados dinamicamente quando os modais forem criados
+});
