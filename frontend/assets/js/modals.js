@@ -77,6 +77,32 @@ function showNovoDizimoModal() {
                                 </div>
                             </div>
                             
+                            <!-- Transferência Section -->
+                            <div id="dizimo-transferencia-section" style="display: none;" class="mb-3">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-university"></i> Dados Bancários para Transferência</h6>
+                                    <div class="mb-3">
+                                        <p class="mb-1"><strong>Banco:</strong> Banco do Brasil</p>
+                                        <p class="mb-1"><strong>Agência:</strong> 0001-2</p>
+                                        <p class="mb-1"><strong>Conta Corrente:</strong> 12345-6</p>
+                                        <p class="mb-1"><strong>CNPJ:</strong> 00.000.000/0001-00</p>
+                                        <p class="mb-0"><strong>Favorecido:</strong> Igreja Exemplo</p>
+                                    </div>
+                                    <hr>
+                                    <p class="small mb-2"><strong>Preencha os dados da transferência:</strong></p>
+                                    <div class="mb-3">
+                                        <label class="form-label">Data da Transferência</label>
+                                        <input type="date" class="form-control" id="dizimo-transfer-date">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Número do Comprovante/DOC</label>
+                                        <input type="text" class="form-control" id="dizimo-transfer-doc" 
+                                               placeholder="Ex: DOC123456 ou TED789012">
+                                    </div>
+                                    <small class="text-muted d-block mt-2">Após realizar a transferência, anexe o comprovante abaixo</small>
+                                </div>
+                            </div>
+                            
                             <div class="mb-3">
                                 <label for="dizimoComprovante" class="form-label">Comprovante (opcional)</label>
                                 <input type="file" class="form-control" id="dizimoComprovante" accept="image/*">
@@ -204,6 +230,33 @@ function showNovaOfertaModal() {
                                     </div>
                                 </div>
                             </div>
+                            
+                            <!-- Transferência Section -->
+                            <div id="oferta-transferencia-section" style="display: none;" class="mb-3">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-university"></i> Dados Bancários para Transferência</h6>
+                                    <div class="mb-3">
+                                        <p class="mb-1"><strong>Banco:</strong> Banco do Brasil</p>
+                                        <p class="mb-1"><strong>Agência:</strong> 0001-2</p>
+                                        <p class="mb-1"><strong>Conta Corrente:</strong> 12345-6</p>
+                                        <p class="mb-1"><strong>CNPJ:</strong> 00.000.000/0001-00</p>
+                                        <p class="mb-0"><strong>Favorecido:</strong> Igreja Exemplo</p>
+                                    </div>
+                                    <hr>
+                                    <p class="small mb-2"><strong>Preencha os dados da transferência:</strong></p>
+                                    <div class="mb-3">
+                                        <label class="form-label">Data da Transferência</label>
+                                        <input type="date" class="form-control" id="oferta-transfer-date">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Número do Comprovante/DOC</label>
+                                        <input type="text" class="form-control" id="oferta-transfer-doc" 
+                                               placeholder="Ex: DOC123456 ou TED789012">
+                                    </div>
+                                    <small class="text-muted d-block mt-2">Após realizar a transferência, anexe o comprovante abaixo</small>
+                                </div>
+                            </div>
+                            
                             <div class="mb-3">
                                 <label for="ofertaComprovante" class="form-label">Comprovante (opcional)</label>
                                 <input type="file" class="form-control" id="ofertaComprovante" accept="image/*">
@@ -342,9 +395,11 @@ function handleMetodoChange(tipo) {
     // Esconder todas as seções
     const pixSection = document.getElementById(`${tipo}-pix-section`);
     const cartaoSection = document.getElementById(`${tipo}-cartao-section`);
+    const transferenciaSection = document.getElementById(`${tipo}-transferencia-section`);
     
     if (pixSection) pixSection.style.display = 'none';
     if (cartaoSection) cartaoSection.style.display = 'none';
+    if (transferenciaSection) transferenciaSection.style.display = 'none';
     
     // Mostrar seção correspondente
     if (metodo === 'pix' && pixSection) {
@@ -352,6 +407,12 @@ function handleMetodoChange(tipo) {
         generateQRCode(tipo);
     } else if (metodo === 'cartao' && cartaoSection) {
         cartaoSection.style.display = 'block';
+    } else if (metodo === 'transferencia' && transferenciaSection) {
+        transferenciaSection.style.display = 'block';
+        // Definir data de hoje como padrão
+        const today = new Date().toISOString().split('T')[0];
+        const transferDateInput = document.getElementById(`${tipo}-transfer-date`);
+        if (transferDateInput) transferDateInput.value = today;
     }
 }
 
