@@ -12,8 +12,16 @@ async function login(email, password) {
         currentUser = data.user;
         localStorage.setItem('currentUser', JSON.stringify(currentUser));
 
-        showApp();
-        showDashboard();
+        // Redirecionar baseado no tipo de usuário
+        if (['admin', 'tesoureiro', 'pastor'].includes(currentUser.tipo_usuario)) {
+            // Administradores vão para o painel admin
+            window.location.href = 'admin.html';
+        } else {
+            // Membros vão para o dashboard de membros
+            showApp();
+            showDashboard();
+        }
+        
         showToast('Login realizado com sucesso!', 'success');
     } catch (error) {
         showToast(error.message, 'danger');
@@ -31,9 +39,10 @@ async function register(userData) {
         currentUser = data.user;
         localStorage.setItem('currentUser', JSON.stringify(currentUser));
 
+        // Novos usuários são sempre membros, vão para dashboard de membros
         showApp();
         showDashboard();
-        showToast('Cadastro realizado com sucesso!', 'success');
+        showToast('Cadastro realizado com sucesso! Bem-vindo(a)!', 'success');
     } catch (error) {
         showToast(error.message, 'danger');
     }
@@ -54,10 +63,28 @@ function checkAuth() {
     if (storedToken && storedUser) {
         currentUser = JSON.parse(storedUser);
         apiService.setToken(storedToken);
-        showApp();
-        showDashboard();
+        
+        // Verificar se está na página correta
+        const isAdminPage = window.location.pathname.includes('admin.html');
+        const isAdmin = ['admin', 'tesoureiro', 'pastor'].includes(currentUser.tipo_usuario);
+        
+        if (isAdmin && !isAdminPage) {
+            // Admin na página de membro - redirecionar
+            window.location.href = 'admin.html';
+        } else if (!isAdmin && isAdminPage) {
+            // Membro tentando acessar admin - redirecionar
+            window.location.href = 'index.html';
+        } else if (!isAdminPage) {
+            // Membro na página correta
+            showApp();
+            showDashboard();
+        }
     } else {
-        showLoginForm();
+        if (window.location.pathname.includes('admin.html')) {
+            window.location.href = 'index.html';
+        } else {
+            showLoginForm();
+        }
     }
 }
 

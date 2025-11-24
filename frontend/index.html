@@ -150,10 +150,18 @@
                                 <i class="fas fa-birthday-cake"></i> Aniversariantes
                             </a>
                         </li>
-                        <li class="nav-item" id="adminMenu" style="display: none;">
-                            <a class="nav-link" href="#" onclick="showAdmin()">
+                        <li class="nav-item dropdown" id="adminMenu" style="display: none;">
+                            <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" data-bs-toggle="dropdown">
                                 <i class="fas fa-cog"></i> Administração
                             </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="admin.html">
+                                    <i class="fas fa-chart-line"></i> Painel Admin
+                                </a></li>
+                                <li><a class="dropdown-item" href="relatorio-visual.html" target="_blank">
+                                    <i class="fas fa-file-alt"></i> Relatório Completo
+                                </a></li>
+                            </ul>
                         </li>
                     </ul>
                     <ul class="navbar-nav">

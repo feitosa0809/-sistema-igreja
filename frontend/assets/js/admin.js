@@ -1,153 +1,106 @@
-// Administração da Igreja - JavaScript
+// Administração da Igreja - JavaScript Simplificado
+const API_URL = 'http://localhost:3000/api';
+
 class AdminDashboard {
     constructor() {
-        this.token = localStorage.getItem('authToken');
-        this.user = JSON.parse(localStorage.getItem('userData') || '{}');
+        this.token = localStorage.getItem('token');
+        this.user = JSON.parse(localStorage.getItem('user') || '{}');
         this.init();
     }
 
     async init() {
         // Verificar autenticação
         if (!this.token) {
-            window.location.href = '/index.html';
+            console.log('Token não encontrado, redirecionando...');
+            window.location.href = 'index.html';
             return;
         }
 
-        // Verificar permissão de admin
-        if (!['admin', 'pastor', 'tesoureiro'].includes(this.user.tipo_usuario)) {
-            alert('Acesso negado! Você não tem permissão para acessar esta área.');
-            window.location.href = '/index.html';
+        // Verificar se é admin/tesoureiro/pastor
+        if (!['admin', 'tesoureiro', 'pastor'].includes(this.user.tipo_usuario)) {
+            console.log('Usuário sem permissão, redirecionando...');
+            alert('Acesso negado! Apenas administradores podem acessar esta área.');
+            window.location.href = 'index.html';
             return;
         }
+
+        console.log('Usuário logado:', this.user);
 
         // Inicializar dashboard
-        this.loadDashboardData();
-        this.loadCharts();
-        this.setLastAccess();
-    }
-
-    async loadDashboardData() {
         try {
-            // Carregar estatísticas do dashboard
-            await Promise.all([
-                this.loadUserStats(),
-                this.loadFinancialStats(),
-                this.loadPendingTransactions()
-            ]);
+            await this.carregarRelatorioCompleto();
+            this.setLastAccess();
+            this.initCharts();
         } catch (error) {
-            console.error('Erro ao carregar dados do dashboard:', error);
+            console.error('Erro ao inicializar:', error);
         }
     }
 
-    async loadUserStats() {
+    async carregarRelatorioCompleto() {
         try {
-            const response = await fetch(`${CONFIG.API_BASE_URL}/admin/usuarios`, {
+            const response = await fetch(`${API_URL}/relatorios/completo`, {
                 headers: {
                     'Authorization': `Bearer ${this.token}`,
                     'Content-Type': 'application/json'
                 }
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                document.getElementById('totalUsers').textContent = data.usuarios.length;
-                this.populateUsersTable(data.usuarios);
+            if (!response.ok) {
+                console.error('Erro ao carregar relatório:', response.status);
+                this.mostrarDadosVazios();
+                return;
             }
+
+            const data = await response.json();
+            this.exibirRelatorio(data.relatorio);
         } catch (error) {
-            console.error('Erro ao carregar usuários:', error);
+            console.error('Erro ao carregar relatório:', error);
+            this.mostrarDadosVazios();
         }
     }
 
-    async loadFinancialStats() {
-        try {
-            const response = await fetch(`${CONFIG.API_BASE_URL}/donations`, {
-                headers: {
-                    'Authorization': `Bearer ${this.token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
+    exibirRelatorio(relatorio) {
+        // Atualizar cards de resumo
+        document.getElementById('totalUsers').textContent = relatorio.usuarios.total || 0;
+        document.getElementById('totalAmount').textContent = this.formatCurrency(parseFloat(relatorio.resumo.totalArrecadado));
+        document.getElementById('monthAmount').textContent = this.formatCurrency(parseFloat(relatorio.dizimos.valorTotal) + parseFloat(relatorio.ofertas.valorTotal));
+        document.getElementById('pendingCount').textContent = relatorio.dizimos.lista.filter(d => d.status === 'pendente').length;
 
-            if (response.ok) {
-                const data = await response.json();
-                this.calculateFinancialStats(data.donations || []);
-            }
-        } catch (error) {
-            console.error('Erro ao carregar dados financeiros:', error);
-        }
-    }
-
-    calculateFinancialStats(donations) {
-        const total = donations.reduce((sum, d) => sum + parseFloat(d.valor || 0), 0);
-        const thisMonth = donations.filter(d => {
-            const date = new Date(d.data_cadastro);
-            const now = new Date();
-            return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-        });
-        const monthTotal = thisMonth.reduce((sum, d) => sum + parseFloat(d.valor || 0), 0);
-
-        document.getElementById('totalAmount').textContent = this.formatCurrency(total);
-        document.getElementById('monthAmount').textContent = this.formatCurrency(monthTotal);
-
-        // Calcular pendentes (simulado)
-        document.getElementById('pendingCount').textContent = '0';
-        
         // Atualizar resumo mensal
-        const tithes = thisMonth.filter(d => d.tipo === 'dizimo').reduce((sum, d) => sum + parseFloat(d.valor || 0), 0);
-        const offerings = thisMonth.filter(d => d.tipo === 'oferta').reduce((sum, d) => sum + parseFloat(d.valor || 0), 0);
+        document.getElementById('monthlyTithes').textContent = this.formatCurrency(parseFloat(relatorio.dizimos.valorTotal));
+        document.getElementById('monthlyOfferings').textContent = this.formatCurrency(parseFloat(relatorio.ofertas.valorTotal));
+        document.getElementById('monthlyTotal').textContent = this.formatCurrency(parseFloat(relatorio.resumo.totalArrecadado));
+
+        // Preencher tabela de usuários
+        this.populateUsersTable(relatorio.usuarios.lista);
         
-        document.getElementById('monthlyTithes').textContent = this.formatCurrency(tithes);
-        document.getElementById('monthlyOfferings').textContent = this.formatCurrency(offerings);
-        document.getElementById('monthlyTotal').textContent = this.formatCurrency(monthTotal);
+        // Preencher transações pendentes
+        this.populatePendingTransactions(relatorio.dizimos.lista, relatorio.ofertas.lista);
+
+        // Atualizar estatísticas
+        this.updateStats(relatorio);
     }
 
-    async loadPendingTransactions() {
-        // Simular transações pendentes (pode ser implementado no backend)
-        const pendingTable = document.getElementById('pendingTransactions').querySelector('tbody');
-        pendingTable.innerHTML = '<tr><td colspan="5" class="text-center">Nenhuma transação pendente</td></tr>';
-    }
-
-    loadCharts() {
-        // Gráfico de arrecadação mensal
-        const ctx1 = document.getElementById('monthlyChart').getContext('2d');
-        new Chart(ctx1, {
-            type: 'line',
-            data: {
-                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
-                datasets: [{
-                    label: 'Arrecadação',
-                    data: [1200, 1900, 3000, 5000, 2000, 3000],
-                    borderColor: '#667eea',
-                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false
-            }
-        });
-
-        // Gráfico pizza
-        const ctx2 = document.getElementById('pieChart').getContext('2d');
-        new Chart(ctx2, {
-            type: 'doughnut',
-            data: {
-                labels: ['Dízimos', 'Ofertas'],
-                datasets: [{
-                    data: [70, 30],
-                    backgroundColor: ['#667eea', '#f093fb']
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false
-            }
-        });
+    mostrarDadosVazios() {
+        document.getElementById('totalUsers').textContent = '0';
+        document.getElementById('totalAmount').textContent = 'R$ 0,00';
+        document.getElementById('monthAmount').textContent = 'R$ 0,00';
+        document.getElementById('pendingCount').textContent = '0';
+        document.getElementById('monthlyTithes').textContent = 'R$ 0,00';
+        document.getElementById('monthlyOfferings').textContent = 'R$ 0,00';
+        document.getElementById('monthlyTotal').textContent = 'R$ 0,00';
     }
 
     populateUsersTable(users) {
-        const tbody = document.getElementById('usersTable').querySelector('tbody');
+        const tbody = document.getElementById('usersTable')?.querySelector('tbody');
+        if (!tbody) return;
+        
         tbody.innerHTML = '';
+
+        if (!users || users.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center">Nenhum usuário cadastrado</td></tr>';
+            return;
+        }
 
         users.forEach(user => {
             const row = document.createElement('tr');
@@ -158,16 +111,72 @@ class AdminDashboard {
                 <td><span class="badge bg-${user.status === 'ativo' ? 'success' : 'danger'}">${user.status}</span></td>
                 <td>${this.formatDate(user.data_cadastro)}</td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="adminDashboard.editUser(${user.id})">
+                    <button class="btn btn-sm btn-outline-primary" onclick="alert('Funcionalidade em desenvolvimento')">
                         <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="adminDashboard.deleteUser(${user.id})">
-                        <i class="fas fa-trash"></i>
                     </button>
                 </td>
             `;
             tbody.appendChild(row);
         });
+    }
+
+    populatePendingTransactions(dizimos, ofertas) {
+        const tbody = document.getElementById('pendingTransactions')?.querySelector('tbody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+
+        const pendentes = [
+            ...(dizimos || []).filter(d => d.status === 'pendente').map(d => ({...d, tipo: 'Dízimo'})),
+            ...(ofertas || []).filter(o => o.status === 'pendente').map(o => ({...o, tipo: 'Oferta'}))
+        ].slice(0, 10);
+
+        if (pendentes.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center">Nenhuma transação pendente</td></tr>';
+            return;
+        }
+
+        pendentes.forEach(trans => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${trans.usuario_nome || 'Anônimo'}</td>
+                    <td>${trans.tipo}</td>
+                    <td>R$ ${parseFloat(trans.valor).toFixed(2)}</td>
+                    <td>${trans.data_pagamento || trans.data_oferta}</td>
+                    <td>
+                        <button class="btn btn-sm btn-success" onclick="alert('Confirmar pagamento')">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="alert('Rejeitar pagamento')">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    updateStats(relatorio) {
+        // Maior doação
+        const allDonations = [
+            ...(relatorio.dizimos.lista || []),
+            ...(relatorio.ofertas.lista || [])
+        ];
+        const maxDonation = Math.max(...allDonations.map(d => parseFloat(d.valor || 0)), 0);
+        document.getElementById('maxDonation').textContent = this.formatCurrency(maxDonation);
+
+        // Média mensal
+        const avgMonthly = allDonations.length > 0 
+            ? parseFloat(relatorio.resumo.totalArrecadado) / 12 
+            : 0;
+        document.getElementById('avgMonthly').textContent = this.formatCurrency(avgMonthly);
+
+        // Contribuintes ativos
+        const activeMembers = new Set(allDonations.map(d => d.usuario_id)).size;
+        document.getElementById('activeMembers').textContent = activeMembers;
+
+        // Taxa de crescimento (simulada)
+        document.getElementById('growthRate').textContent = '12%';
     }
 
     getUserTypeBadgeColor(type) {
@@ -181,7 +190,8 @@ class AdminDashboard {
 
     setLastAccess() {
         const now = new Date();
-        document.getElementById('lastAccess').textContent = this.formatDateTime(now);
+        const el = document.getElementById('lastAccess');
+        if (el) el.textContent = this.formatDateTime(now);
     }
 
     formatCurrency(value) {
@@ -192,6 +202,7 @@ class AdminDashboard {
     }
 
     formatDate(dateString) {
+        if (!dateString) return 'N/A';
         return new Date(dateString).toLocaleDateString('pt-BR');
     }
 
@@ -199,201 +210,155 @@ class AdminDashboard {
         return date.toLocaleString('pt-BR');
     }
 
-    // Métodos para gerenciar seções
-    showSection(sectionId) {
-        // Esconder todas as seções
-        document.querySelectorAll('.content-section').forEach(section => {
-            section.classList.remove('active');
-        });
-        
-        // Remover classe active dos itens do sidebar
-        document.querySelectorAll('.sidebar-item').forEach(item => {
-            item.classList.remove('active');
-        });
-        
-        // Mostrar seção selecionada
-        document.getElementById(sectionId).classList.add('active');
-        
-        // Adicionar classe active ao item clicado
-        event.target.classList.add('active');
-    }
-
-    // Métodos para exportação e relatórios
-    generateReport(type) {
-        alert(`Gerando relatório ${type}... Funcionalidade em desenvolvimento.`);
-    }
-
-    generateCustomReport() {
-        const period = document.getElementById('reportPeriod').value;
-        const type = document.getElementById('reportType').value;
-        alert(`Gerando relatório personalizado: ${period} - ${type}`);
-    }
-
-    exportFinancial() {
-        alert('Exportando dados financeiros... Funcionalidade em desenvolvimento.');
-    }
-
-    // Métodos para backup
-    downloadBackup() {
-        const data = {
-            timestamp: new Date().toISOString(),
-            igreja: {
-                nome: document.getElementById('nomeIgreja').value,
-                cnpj: document.getElementById('cnpjIgreja').value
-            },
-            // Aqui seria incluído todos os dados
-        };
-
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `backup-igreja-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-
-        this.addBackupToHistory();
-    }
-
-    restoreBackup() {
-        const fileInput = document.getElementById('backupFile');
-        if (fileInput.files.length === 0) {
-            alert('Selecione um arquivo de backup primeiro.');
-            return;
+    initCharts() {
+        // Gráfico de arrecadação mensal (dados simulados)
+        const ctx1 = document.getElementById('monthlyChart');
+        if (ctx1) {
+            new Chart(ctx1.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+                    datasets: [{
+                        label: 'Arrecadação',
+                        data: [1200, 1900, 3000, 5000, 2000, 3000, 2500, 4000, 3500, 3800, 4200, 5000],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
         }
 
-        if (confirm('Tem certeza? Esta operação substituirá todos os dados atuais.')) {
-            alert('Restaurando backup... Funcionalidade em desenvolvimento.');
-        }
-    }
-
-    addBackupToHistory() {
-        const historyContainer = document.getElementById('backupHistory');
-        const now = new Date();
-        const item = document.createElement('div');
-        item.className = 'list-group-item d-flex justify-content-between align-items-center';
-        item.innerHTML = `
-            <div>
-                <strong>Backup Automático</strong><br>
-                <small class="text-muted">${this.formatDateTime(now)}</small>
-            </div>
-            <span class="badge bg-success rounded-pill">Concluído</span>
-        `;
-        historyContainer.insertBefore(item, historyContainer.firstChild);
-    }
-
-    // Modal para adicionar usuário
-    showAddUserModal() {
-        alert('Modal de adicionar usuário em desenvolvimento.');
-    }
-
-    // Modal para adicionar campanha
-    showAddCampaignModal() {
-        alert('Modal de adicionar campanha em desenvolvimento.');
-    }
-
-    // Editar usuário
-    editUser(userId) {
-        alert(`Editando usuário ID: ${userId}`);
-    }
-
-    // Deletar usuário
-    deleteUser(userId) {
-        if (confirm('Tem certeza que deseja deletar este usuário?')) {
-            alert(`Deletando usuário ID: ${userId}`);
-        }
-    }
-
-    // Logout
-    logout() {
-        if (confirm('Tem certeza que deseja sair?')) {
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('userData');
-            window.location.href = '/index.html';
+        // Gráfico pizza
+        const ctx2 = document.getElementById('pieChart');
+        if (ctx2) {
+            new Chart(ctx2.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Dízimos', 'Ofertas'],
+                    datasets: [{
+                        data: [70, 30],
+                        backgroundColor: ['#667eea', '#f093fb']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
         }
     }
 }
 
 // Funções globais para serem chamadas pelos elementos HTML
 function showSection(sectionId) {
-    adminDashboard.showSection(sectionId);
+    // Esconder todas as seções
+    document.querySelectorAll('.content-section').forEach(section => {
+        section.classList.remove('active');
+    });
+    
+    // Remover classe active dos itens do sidebar
+    document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Mostrar seção selecionada
+    const section = document.getElementById(sectionId);
+    if (section) section.classList.add('active');
+    
+    // Adicionar classe active ao item clicado
+    event.target.closest('.sidebar-item')?.classList.add('active');
 }
 
 function generateReport(type) {
-    adminDashboard.generateReport(type);
+    alert(`Gerando relatório ${type}... Funcionalidade em desenvolvimento.`);
 }
 
 function generateCustomReport() {
-    adminDashboard.generateCustomReport();
+    const period = document.getElementById('reportPeriod')?.value || 'month';
+    const type = document.getElementById('reportType')?.value || 'all';
+    alert(`Gerando relatório personalizado: ${period} - ${type}`);
 }
 
 function exportFinancial() {
-    adminDashboard.exportFinancial();
+    alert('Exportando dados financeiros... Use o script: node consultar-dados.js');
 }
 
 function downloadBackup() {
-    adminDashboard.downloadBackup();
+    const timestamp = new Date().toISOString().split('T')[0];
+    alert(`Backup será salvo como: backup-igreja-${timestamp}.json\nFuncionalidade em desenvolvimento.`);
 }
 
 function restoreBackup() {
-    adminDashboard.restoreBackup();
+    const fileInput = document.getElementById('backupFile');
+    if (fileInput?.files.length === 0) {
+        alert('Selecione um arquivo de backup primeiro.');
+        return;
+    }
+    if (confirm('Tem certeza? Esta operação substituirá todos os dados atuais.')) {
+        alert('Restaurando backup... Funcionalidade em desenvolvimento.');
+    }
 }
 
 function showAddUserModal() {
-    adminDashboard.showAddUserModal();
+    alert('Modal de adicionar usuário em desenvolvimento.');
 }
 
 function showAddCampaignModal() {
-    adminDashboard.showAddCampaignModal();
+    alert('Modal de adicionar campanha em desenvolvimento.');
 }
 
 function logout() {
-    adminDashboard.logout();
+    if (confirm('Tem certeza que deseja sair?')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = 'index.html';
+    }
 }
 
 // Inicializar dashboard quando a página carregar
 let adminDashboard;
 document.addEventListener('DOMContentLoaded', () => {
     adminDashboard = new AdminDashboard();
-});
-
-// Salvamento dos dados da igreja
-document.addEventListener('DOMContentLoaded', () => {
+    
+    // Salvar dados da igreja
     const igrejaForm = document.getElementById('igrejaForm');
     if (igrejaForm) {
         igrejaForm.addEventListener('submit', (e) => {
             e.preventDefault();
             
             const dados = {
-                nome: document.getElementById('nomeIgreja').value,
-                cnpj: document.getElementById('cnpjIgreja').value,
-                endereco: document.getElementById('enderecoIgreja').value,
-                cidade: document.getElementById('cidadeIgreja').value,
-                estado: document.getElementById('estadoIgreja').value,
-                cep: document.getElementById('cepIgreja').value,
-                telefone: document.getElementById('telefoneIgreja').value,
-                email: document.getElementById('emailIgreja').value,
-                pastor: document.getElementById('pastorIgreja').value
+                nome: document.getElementById('nomeIgreja')?.value,
+                cnpj: document.getElementById('cnpjIgreja')?.value,
+                endereco: document.getElementById('enderecoIgreja')?.value,
+                cidade: document.getElementById('cidadeIgreja')?.value,
+                estado: document.getElementById('estadoIgreja')?.value,
+                cep: document.getElementById('cepIgreja')?.value,
+                telefone: document.getElementById('telefoneIgreja')?.value,
+                email: document.getElementById('emailIgreja')?.value,
+                pastor: document.getElementById('pastorIgreja')?.value
             };
             
-            // Salvar no localStorage (em produção seria no servidor)
             localStorage.setItem('dadosIgreja', JSON.stringify(dados));
-            
             alert('Dados da igreja salvos com sucesso!');
         });
-    }
-    
-    // Carregar dados salvos
-    const dadosSalvos = localStorage.getItem('dadosIgreja');
-    if (dadosSalvos) {
-        const dados = JSON.parse(dadosSalvos);
-        Object.keys(dados).forEach(key => {
-            const element = document.getElementById(key + 'Igreja');
-            if (element) {
-                element.value = dados[key] || '';
-            }
-        });
+        
+        // Carregar dados salvos
+        const dadosSalvos = localStorage.getItem('dadosIgreja');
+        if (dadosSalvos) {
+            const dados = JSON.parse(dadosSalvos);
+            Object.keys(dados).forEach(key => {
+                const element = document.getElementById(key + 'Igreja');
+                if (element) element.value = dados[key] || '';
+            });
+        }
     }
 });

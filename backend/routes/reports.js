@@ -12,8 +12,7 @@ router.get('/dashboard', authMiddleware, requireRole(['admin', 'tesoureiro', 'pa
       SELECT SUM(valor) as total 
       FROM dizimos 
       WHERE status = 'confirmado' 
-      AND MONTH(data_pagamento) = MONTH(CURRENT_DATE()) 
-      AND YEAR(data_pagamento) = YEAR(CURRENT_DATE())
+      AND strftime('%Y-%m', data_pagamento) = strftime('%Y-%m', 'now')
     `);
 
     // Total de ofertas confirmadas no mês atual
@@ -21,8 +20,7 @@ router.get('/dashboard', authMiddleware, requireRole(['admin', 'tesoureiro', 'pa
       SELECT SUM(valor) as total 
       FROM ofertas 
       WHERE status = 'confirmado' 
-      AND MONTH(data_oferta) = MONTH(CURRENT_DATE()) 
-      AND YEAR(data_oferta) = YEAR(CURRENT_DATE())
+      AND strftime('%Y-%m', data_oferta) = strftime('%Y-%m', 'now')
     `);
 
     // Dízimos pendentes
@@ -110,16 +108,16 @@ router.get('/meus-dizimos', authMiddleware, async (req, res) => {
 
     const [rows] = await pool.execute(`
       SELECT 
-        MONTH(data_pagamento) as mes,
+        CAST(strftime('%m', data_pagamento) AS INTEGER) as mes,
         SUM(valor) as total,
         COUNT(*) as quantidade
       FROM dizimos 
       WHERE usuario_id = ? 
       AND status = 'confirmado'
-      AND YEAR(data_pagamento) = ?
-      GROUP BY MONTH(data_pagamento)
+      AND strftime('%Y', data_pagamento) = ?
+      GROUP BY strftime('%m', data_pagamento)
       ORDER BY mes
-    `, [req.user.id, ano]);
+    `, [req.user.id, ano.toString()]);
 
     // Total do ano
     const [totalAno] = await pool.execute(`
@@ -127,8 +125,8 @@ router.get('/meus-dizimos', authMiddleware, async (req, res) => {
       FROM dizimos 
       WHERE usuario_id = ? 
       AND status = 'confirmado'
-      AND YEAR(data_pagamento) = ?
-    `, [req.user.id, ano]);
+      AND strftime('%Y', data_pagamento) = ?
+    `, [req.user.id, ano.toString()]);
 
     res.json({
       dizimos_por_mes: rows,

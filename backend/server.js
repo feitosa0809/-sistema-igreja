@@ -1,14 +1,18 @@
+console.log('🔧 Carregando dependências...');
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
+console.log('📂 Carregando rotas...');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const donationRoutes = require('./routes/donations');
 const reportRoutes = require('./routes/reports');
 const adminRoutes = require('./routes/admin');
 const birthdayRoutes = require('./routes/birthdays');
+const relatoriosRoutes = require('./routes/relatorios');
 
+console.log('⚙️ Iniciando Express...');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -21,6 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../frontend')));
 app.use('/uploads', express.static('public/uploads'));
 
+console.log('🌐 Registrando rotas...');
 // Rotas da API
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -28,6 +33,8 @@ app.use('/api/donations', donationRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/birthdays', birthdayRoutes);
+app.use('/api/relatorios', relatoriosRoutes);
+console.log('✅ Rotas registradas');
 
 // Rota de saúde da API
 app.get('/api/health', (req, res) => {
@@ -56,7 +63,20 @@ app.get('*', (req, res) => {
   }
 });
 
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
   console.log(`🌐 Acesse: http://localhost:${PORT}`);
+});
+
+// Tratamento de erros não capturados
+process.on('uncaughtException', (error) => {
+  console.error('❌ Erro não capturado:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Promise rejeitada não tratada:', reason);
+});
+
+server.on('error', (error) => {
+  console.error('❌ Erro no servidor:', error);
 });
