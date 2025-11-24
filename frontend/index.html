@@ -195,13 +195,19 @@
     <script>
         console.log('Page loaded, initializing...');
         
-        // Show login form immediately for testing
-        setTimeout(() => {
-            const loading = document.getElementById('loading');
+        // Check if we're on the login page and ensure app is hidden
+        window.addEventListener('DOMContentLoaded', () => {
+            const app = document.getElementById('app');
             const loginForm = document.getElementById('loginForm');
-            if (loading) loading.style.display = 'none';
-            if (loginForm) loginForm.style.display = 'block';
-        }, 100);
+            const token = localStorage.getItem('authToken');
+            
+            // If no token, force logout state
+            if (!token) {
+                if (app) app.style.display = 'none';
+                if (loginForm) loginForm.style.display = 'block';
+                document.getElementById('loading').style.display = 'none';
+            }
+        });
     </script>
     
     <script src="assets/js/config.js" onerror="console.error('Failed to load config.js')"></script>
