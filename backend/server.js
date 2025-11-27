@@ -11,6 +11,7 @@ const reportRoutes = require('./routes/reports');
 const adminRoutes = require('./routes/admin');
 const birthdayRoutes = require('./routes/birthdays');
 const relatoriosRoutes = require('./routes/relatorios');
+const usuariosRoutes = require('./routes/usuarios');
 
 console.log('⚙️ Iniciando Express...');
 const app = express();
@@ -34,6 +35,7 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/birthdays', birthdayRoutes);
 app.use('/api/relatorios', relatoriosRoutes);
+app.use('/api/usuarios', usuariosRoutes);
 console.log('✅ Rotas registradas');
 
 // Rota de saúde da API
