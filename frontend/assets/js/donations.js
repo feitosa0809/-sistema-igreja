@@ -39,6 +39,48 @@ async function showDizimos() {
             data.dizimos.forEach(dizimo => {
                 const statusBadge = getStatusBadge(dizimo.status);
                 const dataFormatada = new Date(dizimo.data_pagamento).toLocaleDateString('pt-BR');
+                const isPendente = dizimo.status === 'pendente';
+                
+                let acoesHtml = '<div class="btn-group" role="group">';
+                
+                // Botão Ver Detalhes
+                acoesHtml += `
+                    <button class="btn btn-sm btn-outline-primary" onclick="verDetalhesDizimo(${dizimo.id})" title="Ver detalhes">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                `;
+                
+                // Botão Comprovante (se existir)
+                if (dizimo.comprovante_url) {
+                    acoesHtml += `
+                        <a href="${CONFIG.API_BASE_URL.replace('/api', '')}${dizimo.comprovante_url}" 
+                           target="_blank" 
+                           class="btn btn-sm btn-outline-info" 
+                           title="Ver comprovante">
+                            <i class="fas fa-file-invoice"></i>
+                        </a>
+                    `;
+                }
+                
+                // Botão Editar (só se pendente)
+                if (isPendente) {
+                    acoesHtml += `
+                        <button class="btn btn-sm btn-outline-warning" onclick="editarDizimo(${dizimo.id})" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    `;
+                }
+                
+                // Botão Excluir (só se pendente)
+                if (isPendente) {
+                    acoesHtml += `
+                        <button class="btn btn-sm btn-outline-danger" onclick="excluirDizimo(${dizimo.id})" title="Excluir">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+                }
+                
+                acoesHtml += '</div>';
                 
                 content += `
                     <tr>
@@ -46,9 +88,7 @@ async function showDizimos() {
                         <td>R$ ${parseFloat(dizimo.valor).toFixed(2)}</td>
                         <td>${formatMetodoPagamento(dizimo.metodo_pagamento)}</td>
                         <td>${statusBadge}</td>
-                        <td>
-                            ${dizimo.comprovante_url ? `<a href="${CONFIG.API_BASE_URL.replace('/api', '')}${dizimo.comprovante_url}" target="_blank" class="btn btn-sm btn-outline-info">Comprovante</a>` : ''}
-                        </td>
+                        <td>${acoesHtml}</td>
                     </tr>
                 `;
             });
@@ -103,6 +143,48 @@ async function showOfertas() {
             data.ofertas.forEach(oferta => {
                 const statusBadge = getStatusBadge(oferta.status);
                 const dataFormatada = new Date(oferta.data_oferta).toLocaleDateString('pt-BR');
+                const isPendente = oferta.status === 'pendente';
+                
+                let acoesHtml = '<div class="btn-group" role="group">';
+                
+                // Botão Ver Detalhes
+                acoesHtml += `
+                    <button class="btn btn-sm btn-outline-primary" onclick="verDetalhesOferta(${oferta.id})" title="Ver detalhes">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                `;
+                
+                // Botão Comprovante (se existir)
+                if (oferta.comprovante_url) {
+                    acoesHtml += `
+                        <a href="${CONFIG.API_BASE_URL.replace('/api', '')}${oferta.comprovante_url}" 
+                           target="_blank" 
+                           class="btn btn-sm btn-outline-info" 
+                           title="Ver comprovante">
+                            <i class="fas fa-file-invoice"></i>
+                        </a>
+                    `;
+                }
+                
+                // Botão Editar (só se pendente)
+                if (isPendente) {
+                    acoesHtml += `
+                        <button class="btn btn-sm btn-outline-warning" onclick="editarOferta(${oferta.id})" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    `;
+                }
+                
+                // Botão Excluir (só se pendente)
+                if (isPendente) {
+                    acoesHtml += `
+                        <button class="btn btn-sm btn-outline-danger" onclick="excluirOferta(${oferta.id})" title="Excluir">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+                }
+                
+                acoesHtml += '</div>';
                 
                 content += `
                     <tr>
@@ -111,9 +193,7 @@ async function showOfertas() {
                         <td>${oferta.tipo_oferta}</td>
                         <td>${formatMetodoPagamento(oferta.metodo_pagamento)}</td>
                         <td>${statusBadge}</td>
-                        <td>
-                            ${oferta.comprovante_url ? `<a href="${CONFIG.API_BASE_URL.replace('/api', '')}${oferta.comprovante_url}" target="_blank" class="btn btn-sm btn-outline-info">Comprovante</a>` : ''}
-                        </td>
+                        <td>${acoesHtml}</td>
                     </tr>
                 `;
             });
@@ -245,5 +325,176 @@ async function submitOferta(formData) {
         showOfertas();
     } catch (error) {
         showToast('Erro ao cadastrar oferta: ' + error.message, 'danger');
+    }
+}
+
+// Funções de ações para dízimos
+async function verDetalhesDizimo(id) {
+    try {
+        const response = await apiService.call(`/donations/dizimos`);
+        const dizimo = response.dizimos.find(d => d.id === id);
+        
+        if (!dizimo) {
+            showToast('Dízimo não encontrado', 'error');
+            return;
+        }
+        
+        const dataFormatada = new Date(dizimo.data_pagamento).toLocaleDateString('pt-BR');
+        const statusBadge = getStatusBadge(dizimo.status);
+        
+        const detalhes = `
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <strong>Data:</strong> ${dataFormatada}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <strong>Valor:</strong> R$ ${parseFloat(dizimo.valor).toFixed(2)}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <strong>Método:</strong> ${formatMetodoPagamento(dizimo.metodo_pagamento)}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <strong>Status:</strong> ${statusBadge}
+                </div>
+                ${dizimo.observacao ? `
+                    <div class="col-12 mb-3">
+                        <strong>Observação:</strong><br>
+                        ${dizimo.observacao}
+                    </div>
+                ` : ''}
+                ${dizimo.comprovante_url ? `
+                    <div class="col-12">
+                        <a href="${CONFIG.API_BASE_URL.replace('/api', '')}${dizimo.comprovante_url}" 
+                           target="_blank" 
+                           class="btn btn-info">
+                            <i class="fas fa-file-invoice me-2"></i>Ver Comprovante
+                        </a>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+        
+        Swal.fire({
+            title: 'Detalhes do Dízimo',
+            html: detalhes,
+            icon: 'info',
+            confirmButtonText: 'Fechar'
+        });
+    } catch (error) {
+        showToast('Erro ao carregar detalhes: ' + error.message, 'danger');
+    }
+}
+
+async function editarDizimo(id) {
+    showToast('Funcionalidade de edição em desenvolvimento', 'info');
+}
+
+async function excluirDizimo(id) {
+    const resultado = await Swal.fire({
+        title: 'Confirmar exclusão?',
+        text: 'Esta ação não pode ser desfeita!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sim, excluir!',
+        cancelButtonText: 'Cancelar'
+    });
+    
+    if (resultado.isConfirmed) {
+        try {
+            await apiService.call(`/donations/dizimos/${id}`, 'DELETE');
+            showToast('Dízimo excluído com sucesso!', 'success');
+            showDizimos();
+        } catch (error) {
+            showToast('Erro ao excluir dízimo: ' + error.message, 'danger');
+        }
+    }
+}
+
+// Funções de ações para ofertas
+async function verDetalhesOferta(id) {
+    try {
+        const response = await apiService.call(`/donations/ofertas`);
+        const oferta = response.ofertas.find(o => o.id === id);
+        
+        if (!oferta) {
+            showToast('Oferta não encontrada', 'error');
+            return;
+        }
+        
+        const dataFormatada = new Date(oferta.data_oferta).toLocaleDateString('pt-BR');
+        const statusBadge = getStatusBadge(oferta.status);
+        
+        const detalhes = `
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <strong>Data:</strong> ${dataFormatada}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <strong>Valor:</strong> R$ ${parseFloat(oferta.valor).toFixed(2)}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <strong>Tipo:</strong> ${oferta.tipo_oferta}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <strong>Método:</strong> ${formatMetodoPagamento(oferta.metodo_pagamento)}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <strong>Status:</strong> ${statusBadge}
+                </div>
+                ${oferta.observacao ? `
+                    <div class="col-12 mb-3">
+                        <strong>Observação:</strong><br>
+                        ${oferta.observacao}
+                    </div>
+                ` : ''}
+                ${oferta.comprovante_url ? `
+                    <div class="col-12">
+                        <a href="${CONFIG.API_BASE_URL.replace('/api', '')}${oferta.comprovante_url}" 
+                           target="_blank" 
+                           class="btn btn-info">
+                            <i class="fas fa-file-invoice me-2"></i>Ver Comprovante
+                        </a>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+        
+        Swal.fire({
+            title: 'Detalhes da Oferta',
+            html: detalhes,
+            icon: 'info',
+            confirmButtonText: 'Fechar'
+        });
+    } catch (error) {
+        showToast('Erro ao carregar detalhes: ' + error.message, 'danger');
+    }
+}
+
+async function editarOferta(id) {
+    showToast('Funcionalidade de edição em desenvolvimento', 'info');
+}
+
+async function excluirOferta(id) {
+    const resultado = await Swal.fire({
+        title: 'Confirmar exclusão?',
+        text: 'Esta ação não pode ser desfeita!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sim, excluir!',
+        cancelButtonText: 'Cancelar'
+    });
+    
+    if (resultado.isConfirmed) {
+        try {
+            await apiService.call(`/donations/ofertas/${id}`, 'DELETE');
+            showToast('Oferta excluída com sucesso!', 'success');
+            showOfertas();
+        } catch (error) {
+            showToast('Erro ao excluir oferta: ' + error.message, 'danger');
+        }
     }
 }
