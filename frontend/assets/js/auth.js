@@ -68,14 +68,13 @@ function checkAuth() {
         const isAdminPage = window.location.pathname.includes('admin.html');
         const isAdmin = ['admin', 'tesoureiro', 'pastor'].includes(currentUser.tipo_usuario);
         
-        if (isAdmin && !isAdminPage) {
-            // Admin na página de membro - redirecionar
-            window.location.href = 'admin.html';
-        } else if (!isAdmin && isAdminPage) {
+        // Apenas impedir que membros acessem admin
+        if (!isAdmin && isAdminPage) {
             // Membro tentando acessar admin - redirecionar
+            alert('Acesso negado! Você não tem permissão para acessar esta área.');
             window.location.href = 'index.html';
         } else if (!isAdminPage) {
-            // Membro na página correta
+            // Na página index.html (membros ou admin)
             showApp();
             showDashboard();
         }
