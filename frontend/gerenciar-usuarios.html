@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Usuários - Sistema de Dízimos</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="assets/css/style.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+        }
+        .stats-row {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .stat-box {
+            text-align: center;
+        }
+        .stat-box h3 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .stat-box p {
+            margin: 0;
+            opacity: 0.9;
+        }
+        .filters-section {
+            padding: 25px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .table-section {
+            padding: 30px;
+        }
+        .badge-admin {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .badge-pastor {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+        }
+        .badge-tesoureiro {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .badge-membro {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            opacity: 0.6;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .action-btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 0 2px;
+        }
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .search-box {
+            position: relative;
+        }
+        .search-box input {
+            padding-left: 40px;
+            border-radius: 25px;
+        }
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+        .status-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+        .status-ativo {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-inativo {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .user-row {
+            transition: all 0.3s;
+        }
+        .user-row:hover {
+            background: #f8f9fa;
+            transform: translateX(5px);
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .loading-overlay.active {
+            display: flex;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner-border text-light" style="width: 3rem; height: 3rem;" role="status">
+            <span class="visually-hidden">Carregando...</span>
+        </div>
+    </div>
+
+    <div class="container-fluid px-4">
+        <div class="row justify-content-center">
+            <div class="col-12 col-xl-11">
+                <div class="main-card">
+                    <!-- Header -->
+                    <div class="header-section">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h2 class="mb-0">
+                                <i class="fas fa-users-cog"></i> Gerenciamento de Usuários
+                            </h2>
+                            <button onclick="window.location.href='dashboard.html'" class="btn btn-light">
+                                <i class="fas fa-arrow-left"></i> Voltar ao Dashboard
+                            </button>
+                        </div>
+
+                        <!-- Stats -->
+                        <div class="stats-row">
+                            <div class="row">
+                                <div class="col-md-3 col-6 mb-3 mb-md-0">
+                                    <div class="stat-box">
+                                        <h3 id="totalUsuarios">0</h3>
+                                        <p><i class="fas fa-users"></i> Total de Usuários</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6 mb-3 mb-md-0">
+                                    <div class="stat-box">
+                                        <h3 id="totalAdmins">0</h3>
+                                        <p><i class="fas fa-user-shield"></i> Administradores</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="stat-box">
+                                        <h3 id="totalAtivos">0</h3>
+                                        <p><i class="fas fa-check-circle"></i> Ativos</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="stat-box">
+                                        <h3 id="totalInativos">0</h3>
+                                        <p><i class="fas fa-times-circle"></i> Inativos</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="filters-section">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="search-box">
+                                    <i class="fas fa-search"></i>
+                                    <input type="text" class="form-control" id="searchInput" 
+                                           placeholder="Buscar por nome ou email...">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" id="filterTipo">
+                                    <option value="">Todos os tipos</option>
+                                    <option value="admin">Administradores</option>
+                                    <option value="pastor">Pastores</option>
+                                    <option value="tesoureiro">Tesoureiros</option>
+                                    <option value="membro">Membros</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" id="filterStatus">
+                                    <option value="">Todos os status</option>
+                                    <option value="ativo">Ativos</option>
+                                    <option value="inativo">Inativos</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-primary w-100" onclick="carregarUsuarios()">
+                                    <i class="fas fa-sync-alt"></i> Atualizar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="table-section">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th width="50">#</th>
+                                        <th>Usuário</th>
+                                        <th width="150">Tipo</th>
+                                        <th width="120">Status</th>
+                                        <th width="150">Data Cadastro</th>
+                                        <th width="250" class="text-center">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usuariosTableBody">
+                                    <tr>
+                                        <td colspan="6" class="text-center py-5">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Carregando...</span>
+                                            </div>
+                                            <p class="mt-3 text-muted">Carregando usuários...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination Info -->
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div class="text-muted">
+                                Mostrando <span id="showingCount">0</span> de <span id="totalCount">0</span> usuários
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/config.js"></script>
+    <script>
+        let todosUsuarios = [];
+        let usuariosFiltrados = [];
+
+        // Carregar usuários
+        async function carregarUsuarios() {
+            try {
+                showLoading();
+                
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                const response = await fetch(`${CONFIG.API_BASE_URL}/usuarios`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.status === 401) {
+                    localStorage.clear();
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error('Erro ao carregar usuários');
+                }
+
+                todosUsuarios = await response.json();
+                usuariosFiltrados = todosUsuarios;
+                
+                renderizarUsuarios();
+                atualizarEstatisticas();
+                
+            } catch (error) {
+                console.error('Erro:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro!',
+                    text: 'Erro ao carregar usuários: ' + error.message
+                });
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Renderizar tabela
+        function renderizarUsuarios() {
+            const tbody = document.getElementById('usuariosTableBody');
+            
+            if (usuariosFiltrados.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-5">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Nenhum usuário encontrado</p>
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('showingCount').textContent = '0';
+                document.getElementById('totalCount').textContent = '0';
+                return;
+            }
+
+            tbody.innerHTML = usuariosFiltrados.map((user, index) => `
+                <tr class="user-row">
+                    <td>${index + 1}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="user-avatar me-3">
+                                ${user.nome.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                                <div class="fw-bold">${user.nome}</div>
+                                <div class="text-muted small">
+                                    <i class="fas fa-envelope"></i> ${user.email}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge badge-${user.tipo_usuario}">${getTipoLabel(user.tipo_usuario)}</span>
+                    </td>
+                    <td>
+                        <span class="status-badge status-${user.status}">
+                            <i class="fas fa-${user.status === 'ativo' ? 'check' : 'times'}-circle"></i>
+                            ${user.status === 'ativo' ? 'Ativo' : 'Inativo'}
+                        </span>
+                    </td>
+                    <td class="text-muted small">
+                        ${formatarData(user.data_cadastro)}
+                    </td>
+                    <td class="text-center">
+                        <button class="action-btn btn btn-sm btn-info text-white" 
+                                onclick="verDetalhes(${user.id})" 
+                                title="Ver detalhes">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn btn btn-sm btn-warning" 
+                                onclick="editarTipo(${user.id}, '${user.nome}', '${user.tipo_usuario}')" 
+                                title="Alterar tipo">
+                            <i class="fas fa-user-cog"></i>
+                        </button>
+                        <button class="action-btn btn btn-sm btn-${user.status === 'ativo' ? 'danger' : 'success'}" 
+                                onclick="alterarStatus(${user.id}, '${user.nome}', '${user.status}')" 
+                                title="${user.status === 'ativo' ? 'Desativar' : 'Ativar'}">
+                            <i class="fas fa-${user.status === 'ativo' ? 'ban' : 'check'}"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            document.getElementById('showingCount').textContent = usuariosFiltrados.length;
+            document.getElementById('totalCount').textContent = todosUsuarios.length;
+        }
+
+        // Atualizar estatísticas
+        function atualizarEstatisticas() {
+            const total = todosUsuarios.length;
+            const admins = todosUsuarios.filter(u => u.tipo_usuario === 'admin').length;
+            const ativos = todosUsuarios.filter(u => u.status === 'ativo').length;
+            const inativos = todosUsuarios.filter(u => u.status === 'inativo').length;
+
+            document.getElementById('totalUsuarios').textContent = total;
+            document.getElementById('totalAdmins').textContent = admins;
+            document.getElementById('totalAtivos').textContent = ativos;
+            document.getElementById('totalInativos').textContent = inativos;
+        }
+
+        // Ver detalhes do usuário
+        async function verDetalhes(userId) {
+            const user = todosUsuarios.find(u => u.id === userId);
+            if (!user) return;
+
+            Swal.fire({
+                title: '<i class="fas fa-user-circle"></i> Detalhes do Usuário',
+                html: `
+                    <div class="text-start">
+                        <div class="mb-3">
+                            <strong><i class="fas fa-user"></i> Nome:</strong> ${user.nome}
+                        </div>
+                        <div class="mb-3">
+                            <strong><i class="fas fa-envelope"></i> Email:</strong> ${user.email}
+                        </div>
+                        <div class="mb-3">
+                            <strong><i class="fas fa-shield-alt"></i> Tipo:</strong> 
+                            <span class="badge badge-${user.tipo_usuario}">${getTipoLabel(user.tipo_usuario)}</span>
+                        </div>
+                        <div class="mb-3">
+                            <strong><i class="fas fa-circle"></i> Status:</strong> 
+                            <span class="status-badge status-${user.status}">${user.status === 'ativo' ? 'Ativo' : 'Inativo'}</span>
+                        </div>
+                        <div class="mb-3">
+                            <strong><i class="fas fa-calendar"></i> Cadastrado em:</strong> ${formatarDataCompleta(user.data_cadastro)}
+                        </div>
+                    </div>
+                `,
+                showCloseButton: true,
+                showConfirmButton: false
+            });
+        }
+
+        // Editar tipo de usuário
+        async function editarTipo(userId, nome, tipoAtual) {
+            const { value: novoTipo } = await Swal.fire({
+                title: 'Alterar Tipo de Usuário',
+                html: `
+                    <div class="text-start">
+                        <p><strong>Usuário:</strong> ${nome}</p>
+                        <p><strong>Tipo atual:</strong> <span class="badge badge-${tipoAtual}">${getTipoLabel(tipoAtual)}</span></p>
+                        <label for="tipo" class="form-label mt-3">Novo tipo:</label>
+                    </div>
+                `,
+                input: 'select',
+                inputOptions: {
+                    'admin': '👑 Administrador - Acesso total',
+                    'pastor': '⛪ Pastor - Relatórios e emails',
+                    'tesoureiro': '💰 Tesoureiro - Confirmar pagamentos',
+                    'membro': '👤 Membro - Ver próprios dados'
+                },
+                inputValue: tipoAtual,
+                showCancelButton: true,
+                confirmButtonText: 'Alterar',
+                cancelButtonText: 'Cancelar',
+                inputValidator: (value) => {
+                    if (!value) return 'Selecione um tipo!';
+                }
+            });
+
+            if (novoTipo && novoTipo !== tipoAtual) {
+                try {
+                    showLoading();
+                    
+                    const token = localStorage.getItem('token');
+                    const response = await fetch(`${CONFIG.API_BASE_URL}/usuarios/${userId}/tipo`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ tipo_usuario: novoTipo })
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error || 'Erro ao alterar tipo');
+                    }
+
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Sucesso!',
+                        text: 'Tipo de usuário alterado com sucesso!',
+                        timer: 2000
+                    });
+
+                    carregarUsuarios();
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro!',
+                        text: error.message
+                    });
+                } finally {
+                    hideLoading();
+                }
+            }
+        }
+
+        // Alterar status
+        async function alterarStatus(userId, nome, statusAtual) {
+            const novoStatus = statusAtual === 'ativo' ? 'inativo' : 'ativo';
+            const acao = novoStatus === 'ativo' ? 'ativar' : 'desativar';
+
+            const result = await Swal.fire({
+                title: `${acao.charAt(0).toUpperCase() + acao.slice(1)} Usuário?`,
+                html: `
+                    <p>Tem certeza que deseja ${acao} o usuário:</p>
+                    <p><strong>${nome}</strong></p>
+                `,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: `Sim, ${acao}!`,
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: novoStatus === 'ativo' ? '#28a745' : '#dc3545'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    showLoading();
+                    
+                    const token = localStorage.getItem('token');
+                    const response = await fetch(`${CONFIG.API_BASE_URL}/usuarios/${userId}/status`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ status: novoStatus })
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error || 'Erro ao alterar status');
+                    }
+
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Sucesso!',
+                        text: `Usuário ${novoStatus === 'ativo' ? 'ativado' : 'desativado'} com sucesso!`,
+                        timer: 2000
+                    });
+
+                    carregarUsuarios();
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro!',
+                        text: error.message
+                    });
+                } finally {
+                    hideLoading();
+                }
+            }
+        }
+
+        // Filtros
+        document.getElementById('searchInput').addEventListener('input', aplicarFiltros);
+        document.getElementById('filterTipo').addEventListener('change', aplicarFiltros);
+        document.getElementById('filterStatus').addEventListener('change', aplicarFiltros);
+
+        function aplicarFiltros() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const tipo = document.getElementById('filterTipo').value;
+            const status = document.getElementById('filterStatus').value;
+
+            usuariosFiltrados = todosUsuarios.filter(user => {
+                const matchSearch = !search || 
+                    user.nome.toLowerCase().includes(search) || 
+                    user.email.toLowerCase().includes(search);
+                const matchTipo = !tipo || user.tipo_usuario === tipo;
+                const matchStatus = !status || user.status === status;
+
+                return matchSearch && matchTipo && matchStatus;
+            });
+
+            renderizarUsuarios();
+        }
+
+        // Helpers
+        function getTipoLabel(tipo) {
+            const labels = {
+                'admin': '👑 Admin',
+                'pastor': '⛪ Pastor',
+                'tesoureiro': '💰 Tesoureiro',
+                'membro': '👤 Membro'
+            };
+            return labels[tipo] || tipo;
+        }
+
+        function formatarData(data) {
+            if (!data) return '-';
+            const d = new Date(data);
+            return d.toLocaleDateString('pt-BR');
+        }
+
+        function formatarDataCompleta(data) {
+            if (!data) return '-';
+            const d = new Date(data);
+            return d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR');
+        }
+
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            carregarUsuarios();
+        });
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
