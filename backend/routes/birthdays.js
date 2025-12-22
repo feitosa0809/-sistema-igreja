@@ -28,11 +28,12 @@ router.get('/month/:mes?', authMiddleware, async (req, res) => {
     `;
 
     const rows = await pool.query(query, [mes.toString().padStart(2, '0')]);
+    const resultados = Array.isArray(rows) ? rows : [];
 
     res.json({
       mes: parseInt(mes),
-      total: rows.length,
-      aniversariantes: rows.map(row => ({
+      total: resultados.length,
+      aniversariantes: resultados.map(row => ({
         id: row.id,
         nome: row.nome,
         email: row.email,
@@ -45,7 +46,7 @@ router.get('/month/:mes?', authMiddleware, async (req, res) => {
 
   } catch (error) {
     console.error('Erro ao buscar aniversariantes:', error);
-    res.status(500).json({ error: 'Erro ao buscar aniversariantes' });
+    res.status(500).json({ error: 'Erro ao buscar aniversariantes', message: error.message });
   }
 });
 
@@ -74,11 +75,12 @@ router.get('/today', authMiddleware, async (req, res) => {
     `;
 
     const rows = await pool.query(query, [dia, mes]);
+    const resultados = Array.isArray(rows) ? rows : [];
 
     res.json({
       data: hoje.toISOString().split('T')[0],
-      total: rows.length,
-      aniversariantes: rows.map(row => ({
+      total: resultados.length,
+      aniversariantes: resultados.map(row => ({
         id: row.id,
         nome: row.nome,
         email: row.email,
@@ -90,7 +92,7 @@ router.get('/today', authMiddleware, async (req, res) => {
 
   } catch (error) {
     console.error('Erro ao buscar aniversariantes de hoje:', error);
-    res.status(500).json({ error: 'Erro ao buscar aniversariantes de hoje' });
+    res.status(500).json({ error: 'Erro ao buscar aniversariantes de hoje', message: error.message });
   }
 });
 
@@ -127,8 +129,9 @@ router.get('/upcoming', authMiddleware, async (req, res) => {
     `;
 
     const rows = await pool.query(query);
+    const resultados = Array.isArray(rows) ? rows : [];
     
-    const aniversariantesProximos = rows.filter(row => {
+    const aniversariantesProximos = resultados.filter(row => {
       return proximos7dias.some(d => d.dia === row.dia && d.mes === row.mes);
     }).map(row => {
       const dataAniv = new Date(hoje.getFullYear(), parseInt(row.mes) - 1, parseInt(row.dia));
@@ -154,7 +157,7 @@ router.get('/upcoming', authMiddleware, async (req, res) => {
 
   } catch (error) {
     console.error('Erro ao buscar próximos aniversários:', error);
-    res.status(500).json({ error: 'Erro ao buscar próximos aniversários' });
+    res.status(500).json({ error: 'Erro ao buscar próximos aniversários', message: error.message });
   }
 });
 
@@ -174,6 +177,7 @@ router.get('/stats', authMiddleware, async (req, res) => {
     `;
 
     const rows = await pool.query(query);
+    const resultados = Array.isArray(rows) ? rows : [];
 
     const meses = [
       'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -182,7 +186,7 @@ router.get('/stats', authMiddleware, async (req, res) => {
 
     const estatisticas = meses.map((nome, index) => {
       const mesNum = (index + 1).toString().padStart(2, '0');
-      const dados = rows.find(r => r.mes === mesNum);
+      const dados = resultados.find(r => r.mes === mesNum);
       return {
         mes: index + 1,
         nome_mes: nome,
@@ -190,7 +194,7 @@ router.get('/stats', authMiddleware, async (req, res) => {
       };
     });
 
-    const totalGeral = rows.reduce((acc, row) => acc + row.total, 0);
+    const totalGeral = resultados.reduce((acc, row) => acc + row.total, 0);
 
     res.json({
       total_geral: totalGeral,
@@ -199,7 +203,7 @@ router.get('/stats', authMiddleware, async (req, res) => {
 
   } catch (error) {
     console.error('Erro ao buscar estatísticas:', error);
-    res.status(500).json({ error: 'Erro ao buscar estatísticas' });
+    res.status(500).json({ error: 'Erro ao buscar estatísticas', message: error.message });
   }
 });
 

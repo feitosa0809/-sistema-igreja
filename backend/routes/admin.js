@@ -2,6 +2,7 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const pool = require('../config/database-sqlite');
 const { authMiddleware, requireRole } = require('../middleware/auth');
+const emailService = require('../utils/emailService');
 
 const router = express.Router();
 
@@ -40,6 +41,33 @@ router.put('/dizimos/:id/confirmar', requireRole(['admin', 'tesoureiro']), async
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Dízimo não encontrado ou já processado' });
+    }
+
+    // Buscar dados do dízimo e usuário para enviar email
+    try {
+      const [dizimos] = await pool.execute(`
+        SELECT d.*, u.nome, u.email
+        FROM dizimos d
+        INNER JOIN usuarios u ON u.id = d.usuario_id
+        WHERE d.id = ?
+      `, [dizimoId]);
+
+      if (dizimos.length > 0 && dizimos[0].email) {
+        const dizimo = dizimos[0];
+        const usuario = { nome: dizimo.nome, email: dizimo.email };
+
+        // Enviar email de confirmação (não bloqueia a resposta)
+        emailService.enviarEmailConfirmacaoDizimo(dizimo, usuario)
+          .then(() => {
+            console.log(`✉️ Email de confirmação enviado para ${dizimo.email}`);
+          })
+          .catch(error => {
+            console.error('❌ Erro ao enviar email de confirmação:', error.message);
+          });
+      }
+    } catch (emailError) {
+      // Apenas loga o erro, não afeta a confirmação do dízimo
+      console.error('❌ Erro ao processar email:', emailError.message);
     }
 
     res.json({ message: 'Dízimo confirmado com sucesso' });

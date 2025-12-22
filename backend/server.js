@@ -12,6 +12,11 @@ const adminRoutes = require('./routes/admin');
 const birthdayRoutes = require('./routes/birthdays');
 const relatoriosRoutes = require('./routes/relatorios');
 const usuariosRoutes = require('./routes/usuarios');
+const configRoutes = require('./routes/config');
+const backupRoutes = require('./routes/backup');
+const dashboardRoutes = require('./routes/dashboard');
+const pdfRoutes = require('./routes/pdf');
+const notificacoesRoutes = require('./routes/notificacoes');
 
 console.log('⚙️ Iniciando Express...');
 const app = express();
@@ -36,6 +41,11 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/birthdays', birthdayRoutes);
 app.use('/api/relatorios', relatoriosRoutes);
 app.use('/api/usuarios', usuariosRoutes);
+app.use('/api/config', configRoutes);
+app.use('/api/backup', backupRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/pdf', pdfRoutes);
+app.use('/api/notificacoes', notificacoesRoutes);
 console.log('✅ Rotas registradas');
 
 // Rota de saúde da API
@@ -68,7 +78,77 @@ app.get('*', (req, res) => {
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
   console.log(`🌐 Acesse: http://localhost:${PORT}`);
+  
+  // Iniciar backup automático (a cada 24 horas)
+  const backup = require('./utils/backup');
+  backup.agendarBackupAutomatico(24);
+  console.log('💾 Backup automático ativado (a cada 24 horas)');
+
+  // Iniciar envio automático de emails de aniversário (diário às 8h)
+  agendarEmailsAniversario();
+  console.log('🎂 Emails de aniversário agendados (diário às 8h)');
 });
+
+// Função para agendar emails de aniversário
+function agendarEmailsAniversario() {
+  const emailService = require('./utils/emailService');
+  const db = require('./config/database-sqlite');
+
+  // Executar diariamente
+  const verificarAniversariantes = async () => {
+    try {
+      const hoje = new Date();
+      const dia = String(hoje.getDate()).padStart(2, '0');
+      const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+
+      const aniversariantes = await db.all(`
+        SELECT id, nome, email, data_nascimento
+        FROM usuarios
+        WHERE strftime('%m-%d', data_nascimento) = ?
+        AND status = 'ativo'
+        AND email IS NOT NULL
+        AND email != ''
+      `, [`${mes}-${dia}`]);
+
+      if (aniversariantes.length > 0) {
+        console.log(`🎂 Encontrados ${aniversariantes.length} aniversariante(s) hoje`);
+
+        for (const usuario of aniversariantes) {
+          try {
+            await emailService.enviarEmailAniversario(usuario);
+            console.log(`✉️ Email de aniversário enviado para ${usuario.nome}`);
+          } catch (error) {
+            console.error(`❌ Erro ao enviar email para ${usuario.nome}:`, error.message);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ Erro ao processar aniversariantes:', error.message);
+    }
+  };
+
+  // Executar imediatamente ao iniciar (para teste)
+  // verificarAniversariantes();
+
+  // Calcular tempo até as 8h da manhã
+  const agora = new Date();
+  const proximaExecucao = new Date();
+  proximaExecucao.setHours(8, 0, 0, 0);
+
+  // Se já passou das 8h hoje, agendar para amanhã
+  if (agora.getHours() >= 8) {
+    proximaExecucao.setDate(proximaExecucao.getDate() + 1);
+  }
+
+  const milissegundosAteProximaExecucao = proximaExecucao.getTime() - agora.getTime();
+
+  // Agendar primeira execução
+  setTimeout(() => {
+    verificarAniversariantes();
+    // Depois executar a cada 24 horas
+    setInterval(verificarAniversariantes, 24 * 60 * 60 * 1000);
+  }, milissegundosAteProximaExecucao);
+}
 
 // Tratamento de erros não capturados
 process.on('uncaughtException', (error) => {

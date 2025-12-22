@@ -311,4 +311,66 @@ router.post('/campanhas/:id/contribuir', authMiddleware, upload.single('comprova
   }
 });
 
+// Excluir dízimo (apenas se pendente e do próprio usuário)
+router.delete('/dizimos/:id', authMiddleware, async (req, res) => {
+  try {
+    const dizimoId = req.params.id;
+    const userId = req.user.userId || req.user.id;
+
+    // Verificar se o dízimo existe e pertence ao usuário
+    const dizimo = await pool.query(
+      'SELECT * FROM dizimos WHERE id = ? AND usuario_id = ?',
+      [dizimoId, userId]
+    );
+
+    if (!dizimo || dizimo.length === 0) {
+      return res.status(404).json({ error: 'Dízimo não encontrado' });
+    }
+
+    // Verificar se está pendente
+    if (dizimo[0].status !== 'pendente') {
+      return res.status(400).json({ error: 'Apenas dízimos pendentes podem ser excluídos' });
+    }
+
+    await pool.run('DELETE FROM dizimos WHERE id = ?', [dizimoId]);
+
+    res.json({ message: 'Dízimo excluído com sucesso' });
+
+  } catch (error) {
+    console.error('Error deleting dizimo:', error);
+    res.status(500).json({ error: 'Erro ao excluir dízimo' });
+  }
+});
+
+// Excluir oferta (apenas se pendente e do próprio usuário)
+router.delete('/ofertas/:id', authMiddleware, async (req, res) => {
+  try {
+    const ofertaId = req.params.id;
+    const userId = req.user.userId || req.user.id;
+
+    // Verificar se a oferta existe e pertence ao usuário
+    const oferta = await pool.query(
+      'SELECT * FROM ofertas WHERE id = ? AND usuario_id = ?',
+      [ofertaId, userId]
+    );
+
+    if (!oferta || oferta.length === 0) {
+      return res.status(404).json({ error: 'Oferta não encontrada' });
+    }
+
+    // Verificar se está pendente
+    if (oferta[0].status !== 'pendente') {
+      return res.status(400).json({ error: 'Apenas ofertas pendentes podem ser excluídas' });
+    }
+
+    await pool.run('DELETE FROM ofertas WHERE id = ?', [ofertaId]);
+
+    res.json({ message: 'Oferta excluída com sucesso' });
+
+  } catch (error) {
+    console.error('Error deleting oferta:', error);
+    res.status(500).json({ error: 'Erro ao excluir oferta' });
+  }
+});
+
 module.exports = router;

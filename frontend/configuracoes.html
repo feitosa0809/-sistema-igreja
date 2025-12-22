@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚙️ Configurações da Igreja</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .config-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 20px;
+        }
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            padding: 12px;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: bold;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #5a6fd8, #6a4190);
+        }
+        .section-title {
+            color: #667eea;
+            font-weight: bold;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .preview-box {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="config-container">
+        <!-- Header -->
+        <div class="card">
+            <div class="card-header text-center">
+                <h2><i class="fas fa-cog"></i> Configurações da Igreja</h2>
+                <p class="mb-0">Configure todos os dados da sua igreja</p>
+            </div>
+        </div>
+
+        <!-- Mensagens -->
+        <div id="alertMessage" style="display: none;"></div>
+
+        <!-- Formulário de Configuração -->
+        <form id="configForm">
+            <!-- Dados Básicos -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="section-title"><i class="fas fa-church"></i> Dados da Igreja</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nome da Igreja <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="nome_igreja" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">CNPJ</label>
+                            <input type="text" class="form-control" id="cnpj" placeholder="00.000.000/0000-00">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Endereço Completo</label>
+                            <input type="text" class="form-control" id="endereco" placeholder="Rua, número, bairro, cidade - UF">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Telefone</label>
+                            <input type="text" class="form-control" id="telefone" placeholder="(00) 00000-0000">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">E-mail</label>
+                            <input type="email" class="form-control" id="email" placeholder="contato@igreja.com">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Site</label>
+                            <input type="url" class="form-control" id="site" placeholder="https://www.igreja.com">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">URL do Logo</label>
+                        <input type="url" class="form-control" id="logo_url" placeholder="https://...">
+                        <small class="text-muted">Cole o link de uma imagem online ou deixe em branco</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dados Bancários -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="section-title"><i class="fas fa-university"></i> Dados Bancários</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nome do Banco</label>
+                            <input type="text" class="form-control" id="banco_nome" placeholder="Ex: Banco do Brasil">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Código do Banco</label>
+                            <input type="text" class="form-control" id="banco_codigo" placeholder="Ex: 001">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Agência</label>
+                            <input type="text" class="form-control" id="agencia" placeholder="0000-0">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Conta</label>
+                            <input type="text" class="form-control" id="conta" placeholder="00000-0">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Titular</label>
+                            <input type="text" class="form-control" id="titular" placeholder="Nome da Igreja">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dados PIX -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="section-title"><i class="fas fa-qrcode"></i> Dados PIX</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Tipo de Chave PIX <span class="text-danger">*</span></label>
+                            <select class="form-select" id="pix_tipo" required>
+                                <option value="cpf">CPF</option>
+                                <option value="cnpj">CNPJ</option>
+                                <option value="email">E-mail</option>
+                                <option value="telefone">Telefone</option>
+                                <option value="chave_aleatoria">Chave Aleatória</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Chave PIX <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="pix_chave" required placeholder="Digite a chave PIX">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">URL do QR Code PIX</label>
+                        <input type="url" class="form-control" id="pix_qrcode_url" placeholder="https://...">
+                        <small class="text-muted">Cole o link da imagem do QR Code ou gere em <a href="https://www.qr-code-generator.com/" target="_blank">qr-code-generator.com</a></small>
+                    </div>
+                    
+                    <div class="preview-box" id="pixPreview" style="display:none;">
+                        <h6><i class="fas fa-eye"></i> Pré-visualização:</h6>
+                        <p class="mb-2"><strong>Tipo:</strong> <span id="previewTipo"></span></p>
+                        <p class="mb-2"><strong>Chave:</strong> <span id="previewChave"></span></p>
+                        <img id="previewQRCode" src="" alt="QR Code" style="max-width: 200px; display: none;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mensagens Personalizadas -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="section-title"><i class="fas fa-comment-alt"></i> Mensagens Personalizadas</h5>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Mensagem de Boas-Vindas</label>
+                        <textarea class="form-control" id="mensagem_boas_vindas" rows="3" placeholder="Mensagem que aparece ao fazer login"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Rodapé de Recibos</label>
+                        <textarea class="form-control" id="rodape_recibo" rows="2" placeholder="Mensagem que aparece no rodapé dos recibos"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configurações de E-mail (Avançado) -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="section-title"><i class="fas fa-envelope"></i> Configurações de E-mail (Opcional)</h5>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> Configure para enviar notificações por e-mail
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">E-mail para Notificações</label>
+                            <input type="email" class="form-control" id="email_notificacao" placeholder="notificacoes@igreja.com">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Servidor SMTP</label>
+                            <input type="text" class="form-control" id="smtp_host" placeholder="smtp.gmail.com">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Porta SMTP</label>
+                            <input type="number" class="form-control" id="smtp_port" value="587">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Usuário SMTP</label>
+                            <input type="text" class="form-control" id="smtp_user">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Senha SMTP</label>
+                            <input type="password" class="form-control" id="smtp_password">
+                        </div>
+                    </div>
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="smtp_secure">
+                        <label class="form-check-label" for="smtp_secure">
+                            Usar conexão segura (SSL/TLS)
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botões de Ação -->
+            <div class="card">
+                <div class="card-body text-center">
+                    <button type="submit" class="btn btn-primary btn-lg me-3">
+                        <i class="fas fa-save"></i> Salvar Configurações
+                    </button>
+                    <a href="admin.html" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-arrow-left"></i> Voltar ao Painel
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script src="assets/js/config.js"></script>
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        let authToken = localStorage.getItem('authToken');
+        
+        // Verificar se está logado
+        if (!authToken) {
+            window.location.href = 'index.html';
+        }
+        
+        // Carregar configurações atuais
+        async function carregarConfiguracoes() {
+            try {
+                const response = await fetch(`${API_BASE}/config`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (!response.ok) throw new Error('Erro ao carregar configurações');
+                
+                const config = await response.json();
+                
+                // Preencher formulário
+                document.getElementById('nome_igreja').value = config.nome_igreja || '';
+                document.getElementById('cnpj').value = config.cnpj || '';
+                document.getElementById('endereco').value = config.endereco || '';
+                document.getElementById('telefone').value = config.telefone || '';
+                document.getElementById('email').value = config.email || '';
+                document.getElementById('site').value = config.site || '';
+                document.getElementById('logo_url').value = config.logo_url || '';
+                
+                document.getElementById('banco_nome').value = config.banco_nome || '';
+                document.getElementById('banco_codigo').value = config.banco_codigo || '';
+                document.getElementById('agencia').value = config.agencia || '';
+                document.getElementById('conta').value = config.conta || '';
+                document.getElementById('titular').value = config.titular || '';
+                
+                document.getElementById('pix_tipo').value = config.pix_tipo || 'email';
+                document.getElementById('pix_chave').value = config.pix_chave || '';
+                document.getElementById('pix_qrcode_url').value = config.pix_qrcode_url || '';
+                
+                document.getElementById('email_notificacao').value = config.email_notificacao || '';
+                document.getElementById('smtp_host').value = config.smtp_host || '';
+                document.getElementById('smtp_port').value = config.smtp_port || 587;
+                document.getElementById('smtp_user').value = config.smtp_user || '';
+                document.getElementById('smtp_password').value = config.smtp_password || '';
+                document.getElementById('smtp_secure').checked = config.smtp_secure === 1;
+                
+                document.getElementById('mensagem_boas_vindas').value = config.mensagem_boas_vindas || '';
+                document.getElementById('rodape_recibo').value = config.rodape_recibo || '';
+                
+                atualizarPreview();
+            } catch (error) {
+                mostrarMensagem('Erro ao carregar configurações: ' + error.message, 'danger');
+            }
+        }
+        
+        // Atualizar pré-visualização do PIX
+        function atualizarPreview() {
+            const tipo = document.getElementById('pix_tipo').value;
+            const chave = document.getElementById('pix_chave').value;
+            const qrcode = document.getElementById('pix_qrcode_url').value;
+            
+            if (chave) {
+                document.getElementById('pixPreview').style.display = 'block';
+                document.getElementById('previewTipo').textContent = tipo.toUpperCase();
+                document.getElementById('previewChave').textContent = chave;
+                
+                if (qrcode) {
+                    document.getElementById('previewQRCode').src = qrcode;
+                    document.getElementById('previewQRCode').style.display = 'block';
+                } else {
+                    document.getElementById('previewQRCode').style.display = 'none';
+                }
+            } else {
+                document.getElementById('pixPreview').style.display = 'none';
+            }
+        }
+        
+        // Event listeners para preview
+        document.getElementById('pix_tipo').addEventListener('change', atualizarPreview);
+        document.getElementById('pix_chave').addEventListener('input', atualizarPreview);
+        document.getElementById('pix_qrcode_url').addEventListener('input', atualizarPreview);
+        
+        // Submeter formulário
+        document.getElementById('configForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const dados = {
+                nome_igreja: document.getElementById('nome_igreja').value,
+                cnpj: document.getElementById('cnpj').value,
+                endereco: document.getElementById('endereco').value,
+                telefone: document.getElementById('telefone').value,
+                email: document.getElementById('email').value,
+                site: document.getElementById('site').value,
+                logo_url: document.getElementById('logo_url').value,
+                
+                banco_nome: document.getElementById('banco_nome').value,
+                banco_codigo: document.getElementById('banco_codigo').value,
+                agencia: document.getElementById('agencia').value,
+                conta: document.getElementById('conta').value,
+                titular: document.getElementById('titular').value,
+                
+                pix_tipo: document.getElementById('pix_tipo').value,
+                pix_chave: document.getElementById('pix_chave').value,
+                pix_qrcode_url: document.getElementById('pix_qrcode_url').value,
+                
+                email_notificacao: document.getElementById('email_notificacao').value,
+                smtp_host: document.getElementById('smtp_host').value,
+                smtp_port: parseInt(document.getElementById('smtp_port').value),
+                smtp_user: document.getElementById('smtp_user').value,
+                smtp_password: document.getElementById('smtp_password').value,
+                smtp_secure: document.getElementById('smtp_secure').checked ? 1 : 0,
+                
+                mensagem_boas_vindas: document.getElementById('mensagem_boas_vindas').value,
+                rodape_recibo: document.getElementById('rodape_recibo').value
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/config`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(dados)
+                });
+                
+                if (!response.ok) throw new Error('Erro ao salvar configurações');
+                
+                const result = await response.json();
+                mostrarMensagem('✅ Configurações salvas com sucesso!', 'success');
+                
+                // Scroll para o topo
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (error) {
+                mostrarMensagem('❌ Erro ao salvar: ' + error.message, 'danger');
+            }
+        });
+        
+        function mostrarMensagem(mensagem, tipo) {
+            const alertDiv = document.getElementById('alertMessage');
+            alertDiv.className = `alert alert-${tipo}`;
+            alertDiv.innerHTML = mensagem;
+            alertDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                alertDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Carregar ao iniciar
+        carregarConfiguracoes();
+    </script>
+</body>
+</html>

@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Financeiro - Sistema Igreja</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px 0;
+        }
+        
+        .dashboard-header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .dashboard-header h1 {
+            color: #667eea;
+            margin: 0 0 10px 0;
+            font-weight: 700;
+        }
+        
+        .dashboard-header p {
+            color: #6c757d;
+            margin: 0;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        
+        .stat-card .icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #333;
+            margin: 10px 0;
+        }
+        
+        .stat-card .label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .chart-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .chart-card h4 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        
+        .btn-back {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-back:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .campanha-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .campanha-item h6 {
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .progress {
+            height: 25px;
+            border-radius: 10px;
+        }
+        
+        .progress-bar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-weight: 600;
+        }
+        
+        .dizimista-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .dizimista-item img {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            margin-right: 15px;
+            object-fit: cover;
+        }
+        
+        .dizimista-item .nome {
+            flex: 1;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .dizimista-item .valor {
+            color: #667eea;
+            font-weight: 700;
+        }
+        
+        .aniversariante-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: #fff3cd;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .aniversariante-item img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 15px;
+            object-fit: cover;
+        }
+        
+        .aniversariante-item .nome {
+            flex: 1;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .aniversariante-item .data {
+            color: #856404;
+            font-size: 0.85rem;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.3;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+        }
+        
+        .icon-dizimos { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .icon-ofertas { background: linear-gradient(135deg, #f093fb, #f5576c); color: white; }
+        .icon-total { background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; }
+        .icon-pendentes { background: linear-gradient(135deg, #fa709a, #fee140); color: white; }
+        .icon-membros { background: linear-gradient(135deg, #30cfd0, #330867); color: white; }
+        .icon-campanhas { background: linear-gradient(135deg, #a8edea, #fed6e3); color: #333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1><i class="fas fa-chart-line"></i> Dashboard Financeiro</h1>
+                    <p>Visão geral das finanças da igreja</p>
+                </div>
+                <button class="btn btn-back" onclick="window.location.href='admin.html'">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </button>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row" id="stats-container">
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="icon icon-dizimos">
+                        <i class="fas fa-hand-holding-heart"></i>
+                    </div>
+                    <div class="value" id="stat-dizimos">R$ 0,00</div>
+                    <div class="label">Dízimos do Mês</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="icon icon-ofertas">
+                        <i class="fas fa-gift"></i>
+                    </div>
+                    <div class="value" id="stat-ofertas">R$ 0,00</div>
+                    <div class="label">Ofertas do Mês</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="icon icon-total">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <div class="value" id="stat-total">R$ 0,00</div>
+                    <div class="label">Total do Mês</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="icon icon-pendentes">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="value" id="stat-pendentes">0</div>
+                    <div class="label">Dízimos Pendentes</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="icon icon-membros">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="value" id="stat-membros">0</div>
+                    <div class="label">Membros Ativos</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="icon icon-campanhas">
+                        <i class="fas fa-bullhorn"></i>
+                    </div>
+                    <div class="value" id="stat-campanhas-ativas">0</div>
+                    <div class="label">Campanhas Ativas</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row">
+            <!-- Evolução Mensal -->
+            <div class="col-lg-8">
+                <div class="chart-card">
+                    <h4><i class="fas fa-chart-area"></i> Evolução Mensal (Últimos 6 Meses)</h4>
+                    <canvas id="chartEvolucao"></canvas>
+                </div>
+            </div>
+
+            <!-- Distribuição por Tipo -->
+            <div class="col-lg-4">
+                <div class="chart-card">
+                    <h4><i class="fas fa-chart-pie"></i> Distribuição por Tipo</h4>
+                    <canvas id="chartDistribuicao"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Campanhas e Top Dizimistas -->
+        <div class="row">
+            <!-- Campanhas Ativas -->
+            <div class="col-lg-6">
+                <div class="chart-card">
+                    <h4><i class="fas fa-bullhorn"></i> Campanhas Ativas</h4>
+                    <div id="campanhas-container"></div>
+                </div>
+            </div>
+
+            <!-- Top Dizimistas -->
+            <div class="col-lg-6">
+                <div class="chart-card">
+                    <h4><i class="fas fa-trophy"></i> Top 10 Dizimistas do Ano</h4>
+                    <div id="dizimistas-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aniversariantes -->
+        <div class="row">
+            <div class="col-12">
+                <div class="chart-card">
+                    <h4><i class="fas fa-birthday-cake"></i> Aniversariantes do Mês</h4>
+                    <div id="aniversariantes-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        let chartEvolucao, chartDistribuicao;
+
+        // Carregar dados ao iniciar
+        document.addEventListener('DOMContentLoaded', () => {
+            carregarResumoFinanceiro();
+            carregarEvolucaoMensal();
+            carregarDistribuicaoTipos();
+            carregarCampanhasProgresso();
+            carregarTopDizimistas();
+            carregarAniversariantes();
+        });
+
+        // Carregar resumo financeiro
+        async function carregarResumoFinanceiro() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/dashboard/resumo-financeiro`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Erro ao carregar resumo');
+
+                const data = await response.json();
+
+                document.getElementById('stat-dizimos').textContent = `R$ ${parseFloat(data.dizimos.total).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                document.getElementById('stat-ofertas').textContent = `R$ ${parseFloat(data.ofertas.total).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                document.getElementById('stat-total').textContent = `R$ ${parseFloat(data.totalMes).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                document.getElementById('stat-pendentes').textContent = data.pendentes.quantidade;
+                document.getElementById('stat-membros').textContent = data.membros;
+                document.getElementById('stat-campanhas-ativas').textContent = data.campanhas;
+
+            } catch (error) {
+                console.error('Erro ao carregar resumo:', error);
+            }
+        }
+
+        // Carregar evolução mensal
+        async function carregarEvolucaoMensal() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/dashboard/evolucao-mensal`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Erro ao carregar evolução');
+
+                const data = await response.json();
+
+                const labels = data.map(item => {
+                    const [ano, mes] = item.mes.split('-');
+                    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                    return `${meses[parseInt(mes) - 1]}/${ano}`;
+                });
+
+                const ctx = document.getElementById('chartEvolucao').getContext('2d');
+                chartEvolucao = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Dízimos',
+                                data: data.map(item => parseFloat(item.dizimos)),
+                                borderColor: '#667eea',
+                                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            },
+                            {
+                                label: 'Ofertas',
+                                data: data.map(item => parseFloat(item.ofertas)),
+                                borderColor: '#764ba2',
+                                backgroundColor: 'rgba(118, 75, 162, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            },
+                            {
+                                label: 'Total',
+                                data: data.map(item => parseFloat(item.total)),
+                                borderColor: '#4facfe',
+                                backgroundColor: 'rgba(79, 172, 254, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return 'R$ ' + value.toLocaleString('pt-BR');
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+            } catch (error) {
+                console.error('Erro ao carregar evolução mensal:', error);
+            }
+        }
+
+        // Carregar distribuição por tipos
+        async function carregarDistribuicaoTipos() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/dashboard/distribuicao-tipos`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Erro ao carregar distribuição');
+
+                const data = await response.json();
+
+                const ctx = document.getElementById('chartDistribuicao').getContext('2d');
+                chartDistribuicao = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.map(item => item.tipo),
+                        datasets: [{
+                            data: data.map(item => parseFloat(item.total)),
+                            backgroundColor: data.map(item => item.cor),
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'bottom'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.parsed || 0;
+                                        return label + ': R$ ' + value.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+            } catch (error) {
+                console.error('Erro ao carregar distribuição:', error);
+            }
+        }
+
+        // Carregar campanhas em progresso
+        async function carregarCampanhasProgresso() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/dashboard/campanhas-progresso`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Erro ao carregar campanhas');
+
+                const data = await response.json();
+                const container = document.getElementById('campanhas-container');
+
+                if (data.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-bullhorn"></i>
+                            <p>Nenhuma campanha ativa no momento</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = data.map(campanha => `
+                    <div class="campanha-item">
+                        <h6>${campanha.nome}</h6>
+                        <div class="progress">
+                            <div class="progress-bar" role="progressbar" 
+                                 style="width: ${Math.min(campanha.percentual, 100)}%"
+                                 aria-valuenow="${campanha.percentual}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                                ${campanha.percentual}%
+                            </div>
+                        </div>
+                        <small class="text-muted">
+                            R$ ${parseFloat(campanha.arrecadado).toLocaleString('pt-BR', {minimumFractionDigits: 2})} 
+                            de R$ ${parseFloat(campanha.meta).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                        </small>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Erro ao carregar campanhas:', error);
+            }
+        }
+
+        // Carregar top dizimistas
+        async function carregarTopDizimistas() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/dashboard/top-dizimistas`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Erro ao carregar dizimistas');
+
+                const data = await response.json();
+                const container = document.getElementById('dizimistas-container');
+
+                if (data.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-trophy"></i>
+                            <p>Nenhum dizimista registrado</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = data.map((diz, index) => `
+                    <div class="dizimista-item">
+                        <img src="${diz.fotoPerfil || 'https://via.placeholder.com/45'}" alt="${diz.nome}">
+                        <div class="nome">${index + 1}. ${diz.nome}</div>
+                        <div class="valor">R$ ${parseFloat(diz.total).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Erro ao carregar dizimistas:', error);
+            }
+        }
+
+        // Carregar aniversariantes
+        async function carregarAniversariantes() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/dashboard/aniversariantes-mes`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Erro ao carregar aniversariantes');
+
+                const data = await response.json();
+                const container = document.getElementById('aniversariantes-container');
+
+                if (data.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-birthday-cake"></i>
+                            <p>Nenhum aniversariante este mês</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = data.map(pessoa => {
+                    const data_nasc = new Date(pessoa.dataNascimento + 'T00:00:00');
+                    const dia = data_nasc.getDate();
+                    const mes = data_nasc.getMonth() + 1;
+                    
+                    return `
+                        <div class="aniversariante-item">
+                            <img src="${pessoa.fotoPerfil || 'https://via.placeholder.com/40'}" alt="${pessoa.nome}">
+                            <div class="nome">${pessoa.nome}</div>
+                            <div class="data">${String(dia).padStart(2, '0')}/${String(mes).padStart(2, '0')}</div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error('Erro ao carregar aniversariantes:', error);
+            }
+        }
+    </script>
+</body>
+</html>

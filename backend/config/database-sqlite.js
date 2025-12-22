@@ -4,13 +4,23 @@ const path = require('path');
 const dbPath = path.join(__dirname, '..', 'database.sqlite');
 const db = new sqlite3.Database(dbPath);
 
+// Função auxiliar para executar comandos SQL com Promise
+function runAsync(sql) {
+  return new Promise((resolve, reject) => {
+    db.run(sql, function(err) {
+      if (err) reject(err);
+      else resolve(this);
+    });
+  });
+}
+
 // Função para criar as tabelas
 async function initializeDatabase() {
   try {
     console.log('🔄 Inicializando banco SQLite...');
     
     // Criar tabela de usuários
-    db.run(`
+    await runAsync(`
       CREATE TABLE IF NOT EXISTS usuarios (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nome TEXT NOT NULL,
@@ -28,14 +38,16 @@ async function initializeDatabase() {
     `);
 
     // Adicionar coluna foto_perfil se não existir (para bancos existentes)
-    db.run(`ALTER TABLE usuarios ADD COLUMN foto_perfil TEXT`, (err) => {
-      if (err && !err.message.includes('duplicate column')) {
+    try {
+      await runAsync(`ALTER TABLE usuarios ADD COLUMN foto_perfil TEXT`);
+    } catch (err) {
+      if (!err.message.includes('duplicate column')) {
         console.error('Erro ao adicionar coluna foto_perfil:', err);
       }
-    });
+    }
 
     // Criar tabela de dízimos
-    db.run(`
+    await runAsync(`
       CREATE TABLE IF NOT EXISTS dizimos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         usuario_id INTEGER NOT NULL,
@@ -54,7 +66,7 @@ async function initializeDatabase() {
     `);
 
     // Criar tabela de ofertas
-    db.run(`
+    await runAsync(`
       CREATE TABLE IF NOT EXISTS ofertas (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         usuario_id INTEGER,
@@ -71,7 +83,7 @@ async function initializeDatabase() {
     `);
 
     // Criar tabela de campanhas
-    db.run(`
+    await runAsync(`
       CREATE TABLE IF NOT EXISTS campanhas (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nome TEXT NOT NULL,
@@ -88,7 +100,7 @@ async function initializeDatabase() {
     `);
 
     // Criar tabela de contribuições para campanhas
-    db.run(`
+    await runAsync(`
       CREATE TABLE IF NOT EXISTS contribuicoes_campanha (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         campanha_id INTEGER NOT NULL,
@@ -106,7 +118,7 @@ async function initializeDatabase() {
     `);
 
     // Criar tabela de configurações
-    db.run(`
+    await runAsync(`
       CREATE TABLE IF NOT EXISTS configuracoes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         chave TEXT UNIQUE NOT NULL,
@@ -114,12 +126,50 @@ async function initializeDatabase() {
         descricao TEXT,
         data_atualizacao DATETIME DEFAULT CURRENT_TIMESTAMP
       )
-    `, () => {
-      console.log('✅ Banco SQLite inicializado com sucesso');
-    });
+    `);
+    
+    // Criar tabela de configurações da igreja
+    await runAsync(`
+      CREATE TABLE IF NOT EXISTS configuracoes_igreja (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nome_igreja TEXT NOT NULL DEFAULT 'Minha Igreja',
+        cnpj TEXT,
+        endereco TEXT,
+        telefone TEXT,
+        email TEXT,
+        site TEXT,
+        logo_url TEXT,
+        
+        banco_nome TEXT,
+        banco_codigo TEXT,
+        agencia TEXT,
+        conta TEXT,
+        titular TEXT,
+        
+        pix_tipo TEXT DEFAULT 'email',
+        pix_chave TEXT,
+        pix_qrcode_url TEXT,
+        
+        email_notificacao TEXT,
+        smtp_host TEXT,
+        smtp_port INTEGER DEFAULT 587,
+        smtp_user TEXT,
+        smtp_password TEXT,
+        smtp_secure INTEGER DEFAULT 0,
+        
+        mensagem_boas_vindas TEXT,
+        rodape_recibo TEXT,
+        
+        data_cadastro DATETIME DEFAULT CURRENT_TIMESTAMP,
+        data_atualizacao DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    console.log('✅ Banco SQLite inicializado com sucesso');
     
   } catch (error) {
     console.error('❌ Erro ao inicializar banco SQLite:', error);
+    throw error;
   }
 }
 

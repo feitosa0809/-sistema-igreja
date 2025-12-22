@@ -1,25 +1,124 @@
 ﻿<!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Limpar Cache</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 Solução: Menu Admin Não Aparece</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .card { border: none; border-radius: 15px; }
+        .btn-xl { padding: 20px 40px; font-size: 1.2rem; }
+        kbd { padding: 5px 10px; background: #333; color: white; border-radius: 5px; }
+    </style>
 </head>
-<body style='font-family: Arial; text-align: center; padding: 50px; background: #f5f5f5;'>
-    <div style='background: white; padding: 40px; border-radius: 10px; max-width: 500px; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1);'>
-        <h1 style='color: #dc3545;'>🔄 Limpar Cache do Sistema</h1>
-        <p style='color: #666; margin: 20px 0;'>Clique no botão abaixo para limpar todos os dados salvos e fazer logout.</p>
-        <button onclick='limparTudo()' style='padding: 20px 40px; font-size: 18px; cursor: pointer; background: #dc3545; color: white; border: none; border-radius: 5px; font-weight: bold;'>
-            Limpar e Voltar ao Login
-        </button>
-        <div id="status" style='margin-top: 20px; color: #28a745; font-weight: bold;'></div>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow-lg">
+                    <div class="card-header bg-danger text-white text-center py-4">
+                        <h2><i class="fas fa-exclamation-triangle"></i> Menu Admin Não Aparece?</h2>
+                        <p class="mb-0">Solução Rápida - Cache do Navegador</p>
+                    </div>
+                    
+                    <div class="card-body p-5">
+                        <!-- Diagnóstico -->
+                        <div class="alert alert-info border-0">
+                            <h5><i class="fas fa-info-circle"></i> <strong>O que está acontecendo?</strong></h5>
+                            <p class="mb-0">O navegador está usando uma versão antiga do código (cache). O menu administrativo existe mas não está sendo carregado.</p>
+                        </div>
+                        
+                        <!-- Solução Automática -->
+                        <div class="text-center my-4">
+                            <h4 class="mb-3">✨ Solução AUTOMÁTICA (Recomendada)</h4>
+                            <button id="btnLimpar" class="btn btn-danger btn-xl shadow-lg">
+                                <i class="fas fa-broom"></i> LIMPAR CACHE E RECARREGAR
+                            </button>
+                            <p class="text-muted mt-3">Clique acima para resolver automaticamente</p>
+                        </div>
+                        
+                        <hr class="my-5">
+                        
+                        <!-- Solução Manual -->
+                        <h4 class="mb-4"><i class="fas fa-hand-pointer"></i> Solução MANUAL (alternativa)</h4>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="card bg-light h-100">
+                                    <div class="card-body">
+                                        <h6 class="text-primary"><strong>1️⃣ Limpar Cache:</strong></h6>
+                                        <p class="small mb-2">Pressione as teclas:</p>
+                                        <div class="text-center mb-2">
+                                            <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Delete</kbd>
+                                        </div>
+                                        <p class="small mb-0">Marque "Cache" e clique "Limpar"</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card bg-light h-100">
+                                    <div class="card-body">
+                                        <h6 class="text-primary"><strong>2️⃣ Recarregar:</strong></h6>
+                                        <p class="small mb-2">Feche o navegador (todas as janelas)</p>
+                                        <p class="small mb-2">Abra novamente e acesse:</p>
+                                        <div class="text-center">
+                                            <code>localhost:3000</code>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Credenciais -->
+                        <div class="card border-success mt-4">
+                            <div class="card-body bg-light">
+                                <h6 class="text-success"><i class="fas fa-user-shield"></i> <strong>Credenciais Admin:</strong></h6>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="text-muted">Email:</small><br>
+                                        <code>alessandro_feitosa21@hotmail.com</code>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Senha:</small><br>
+                                        <code>123456</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- O que esperar -->
+                        <div class="alert alert-success border-0 mt-4">
+                            <h6><i class="fas fa-check-circle"></i> <strong>Após limpar o cache, você verá:</strong></h6>
+                            <ul class="mb-0">
+                                <li>Menu <strong>"Administração"</strong> com ícone de engrenagem <i class="fas fa-cog"></i></li>
+                                <li>Opções: <strong>"Painel Admin"</strong> e <strong>"Relatório Completo"</strong></li>
+                                <li>Acesso completo ao painel administrativo</li>
+                            </ul>
+                        </div>
+                        
+                        <div id="status" class="text-center mt-4"></div>
+                    </div>
+                    
+                    <div class="card-footer text-center bg-light">
+                        <a href="index.html" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Voltar ao Login
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    
+
     <script>
-        function limparTudo() {
-            // Limpar localStorage
-            localStorage.clear();
+        document.getElementById('btnLimpar').addEventListener('click', function() {
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Limpando...';
             
-            // Limpar sessionStorage
+            // Limpar tudo
+            localStorage.clear();
             sessionStorage.clear();
             
             // Limpar cookies
@@ -28,17 +127,27 @@
             });
             
             // Mostrar status
-            document.getElementById('status').textContent = '✅ Cache limpo com sucesso!';
+            const status = document.getElementById('status');
+            status.innerHTML = `
+                <div class="alert alert-success shadow-sm">
+                    <h5><i class="fas fa-check-circle"></i> Cache Limpo com Sucesso!</h5>
+                    <p class="mb-0"><strong>IMPORTANTE:</strong> Feche <u>todas</u> as janelas do navegador e abra novamente.</p>
+                    <hr>
+                    <p class="mb-0">Redirecionando em <span id="countdown">5</span> segundos...</p>
+                </div>
+            `;
             
-            // Redirecionar após 1 segundo
-            setTimeout(() => {
-                window.location.replace('/index.html');
+            // Countdown e redirect
+            let seconds = 5;
+            const countdownEl = document.getElementById('countdown');
+            const interval = setInterval(() => {
+                seconds--;
+                countdownEl.textContent = seconds;
+                if (seconds <= 0) {
+                    clearInterval(interval);
+                    window.location.href = 'http://localhost:3000';
+                }
             }, 1000);
-        }
-        
-        // Auto-executar ao carregar a página
-        window.addEventListener('DOMContentLoaded', () => {
-            console.log('Página de limpeza carregada');
         });
     </script>
 </body>

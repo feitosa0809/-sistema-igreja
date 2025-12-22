@@ -147,6 +147,30 @@
             margin-bottom: 15px;
             border-left: 5px solid #667eea;
         }
+        
+        /* Estilos para campos inválidos */
+        .form-control.is-invalid,
+        .form-select.is-invalid {
+            border-color: #dc3545;
+            background-color: #ffe6e6;
+        }
+        
+        .form-control.is-invalid:focus,
+        .form-select.is-invalid:focus {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+        
+        /* Animação de shake para campos inválidos */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        
+        .shake {
+            animation: shake 0.5s;
+        }
     </style>
 </head>
 <body>
@@ -277,6 +301,155 @@
                     <input type="hidden" id="selectedMethod" required>
                 </div>
 
+                <!-- Informações PIX (aparecem apenas quando selecionar PIX) -->
+                <div id="pixFields" style="display: none;" class="mb-4">
+                    <div class="card border-primary">
+                        <div class="card-body">
+                            <h6 class="card-title mb-3"><i class="fas fa-qrcode"></i> Pagar com PIX</h6>
+                            
+                            <!-- QR Code -->
+                            <div class="text-center mb-3">
+                                <div class="bg-white p-3 d-inline-block rounded">
+                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=00020126330014BR.GOV.BCB.PIX0111123456789015204000053039865802BR5925IGREJA%20EXEMPLO6009SAO%20PAULO62070503***6304" 
+                                         alt="QR Code PIX" style="width: 200px; height: 200px;">
+                                </div>
+                                <div class="mt-2">
+                                    <small class="text-muted">Escaneie o QR Code com o app do seu banco</small>
+                                </div>
+                            </div>
+
+                            <!-- Chave PIX -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Chave PIX da Igreja:</strong></label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="pixKey" value="igreja@exemplo.com.br" readonly>
+                                    <button class="btn btn-outline-primary" type="button" onclick="copiarChavePix()">
+                                        <i class="fas fa-copy"></i> Copiar
+                                    </button>
+                                </div>
+                                <small class="text-muted">Use esta chave para fazer o PIX manualmente</small>
+                            </div>
+
+                            <!-- Instruções -->
+                            <div class="alert alert-info mb-0">
+                                <strong><i class="fas fa-info-circle"></i> Como pagar:</strong>
+                                <ol class="mb-0 mt-2">
+                                    <li>Abra o app do seu banco</li>
+                                    <li>Escolha PIX → Pagar com QR Code ou Chave PIX</li>
+                                    <li>Escaneie o QR Code acima ou cole a chave PIX</li>
+                                    <li>Confirme o valor e finalize o pagamento</li>
+                                    <li>Após pagar, clique em "Confirmar Pagamento" abaixo</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campos de Cartão (aparecem apenas quando selecionar cartão) -->
+                <div id="cardFields" style="display: none;" class="mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title mb-3"><i class="fas fa-credit-card"></i> Dados do Cartão</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Nome no Cartão <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="cardName" placeholder="Nome como está no cartão">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Número do Cartão <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="cardNumber" placeholder="0000 0000 0000 0000" maxlength="19">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Validade <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="cardExpiry" placeholder="MM/AA" maxlength="5">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">CVV <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="cardCVV" placeholder="123" maxlength="4">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Tipo <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="cardType">
+                                        <option value="">Selecione</option>
+                                        <option value="credito">Crédito</option>
+                                        <option value="debito">Débito</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="alert alert-info mb-0">
+                                <small><i class="fas fa-info-circle"></i> Os dados do cartão são apenas para registro. O pagamento deve ser processado externamente.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informações de Transferência (aparecem apenas quando selecionar Transferência) -->
+                <div id="transferenciaFields" style="display: none;" class="mb-4">
+                    <div class="card border-success">
+                        <div class="card-body">
+                            <h6 class="card-title mb-3"><i class="fas fa-university"></i> Dados Bancários da Igreja</h6>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label"><strong>Banco:</strong></label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" value="Banco do Brasil - 001" readonly>
+                                        <button class="btn btn-outline-success btn-sm" type="button" onclick="copiarTexto('Banco do Brasil - 001')">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label"><strong>Agência:</strong></label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" value="1234-5" readonly>
+                                        <button class="btn btn-outline-success btn-sm" type="button" onclick="copiarTexto('1234-5')">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label"><strong>Conta Corrente:</strong></label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" value="12345-6" readonly>
+                                        <button class="btn btn-outline-success btn-sm" type="button" onclick="copiarTexto('12345-6')">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label"><strong>CNPJ:</strong></label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" value="12.345.678/0001-99" readonly>
+                                        <button class="btn btn-outline-success btn-sm" type="button" onclick="copiarTexto('12.345.678/0001-99')">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label"><strong>Favorecido:</strong></label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" value="IGREJA EXEMPLO" readonly>
+                                        <button class="btn btn-outline-success btn-sm" type="button" onclick="copiarTexto('IGREJA EXEMPLO')">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-success mt-3 mb-0">
+                                <strong><i class="fas fa-info-circle"></i> Instruções:</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li>Use os dados acima para fazer uma TED ou DOC</li>
+                                    <li>Clique no ícone <i class="fas fa-copy"></i> para copiar cada informação</li>
+                                    <li>Após realizar a transferência, clique em "Confirmar Pagamento"</li>
+                                    <li>Guarde o comprovante bancário</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="mb-3">
                     <label class="form-label">Observações (opcional)</label>
                     <textarea class="form-control" id="paymentNotes" rows="3" placeholder="Comentários sobre o pagamento..."></textarea>
@@ -379,9 +552,81 @@
             // Define o valor no campo hidden
             document.getElementById('selectedMethod').value = metodo;
             
-            // Debug
+            // Ocultar todos os campos específicos
+            document.getElementById('pixFields').style.display = 'none';
+            document.getElementById('cardFields').style.display = 'none';
+            document.getElementById('transferenciaFields').style.display = 'none';
+            
+            // Mostrar campos específicos do método selecionado
+            if (metodo === 'pix') {
+                document.getElementById('pixFields').style.display = 'block';
+                document.getElementById('pixFields').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else if (metodo === 'cartao') {
+                document.getElementById('cardFields').style.display = 'block';
+                document.getElementById('cardFields').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                // Limpar campos de cartão
+                document.getElementById('cardName').value = '';
+                document.getElementById('cardNumber').value = '';
+                document.getElementById('cardExpiry').value = '';
+                document.getElementById('cardCVV').value = '';
+                document.getElementById('cardType').value = '';
+            } else if (metodo === 'transferencia') {
+                document.getElementById('transferenciaFields').style.display = 'block';
+                document.getElementById('transferenciaFields').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            
             console.log('Método selecionado:', metodo);
         }
+
+        // Função para copiar chave PIX
+        function copiarChavePix() {
+            const pixKey = document.getElementById('pixKey').value;
+            navigator.clipboard.writeText(pixKey).then(() => {
+                mostrarResultado('✅ Chave PIX copiada!', 'success');
+            });
+        }
+
+        // Função genérica para copiar texto
+        function copiarTexto(texto) {
+            navigator.clipboard.writeText(texto).then(() => {
+                mostrarResultado('✅ Copiado: ' + texto, 'success');
+            });
+        }
+
+        // Máscaras para campos de cartão
+        document.getElementById('cardNumber').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\s/g, '');
+            let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+            e.target.value = formattedValue;
+            // Remover erro ao digitar
+            this.classList.remove('is-invalid');
+        });
+
+        document.getElementById('cardExpiry').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length >= 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2, 4);
+            }
+            e.target.value = value;
+            // Remover erro ao digitar
+            this.classList.remove('is-invalid');
+        });
+
+        document.getElementById('cardCVV').addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/\D/g, '');
+            // Remover erro ao digitar
+            this.classList.remove('is-invalid');
+        });
+        
+        // Remover erro ao digitar no nome do cartão
+        document.getElementById('cardName').addEventListener('input', function(e) {
+            this.classList.remove('is-invalid');
+        });
+        
+        // Remover erro ao selecionar tipo de cartão
+        document.getElementById('cardType').addEventListener('change', function(e) {
+            this.classList.remove('is-invalid');
+        });
 
         // Pagamento
         document.getElementById('paymentForm').addEventListener('submit', async (e) => {
@@ -415,6 +660,75 @@
                 // Destacar área de métodos de pagamento
                 document.querySelector('.payment-methods-section').scrollIntoView({ behavior: 'smooth' });
                 return;
+            }
+            
+            // Validar campos de cartão se o método for cartão
+            if (metodo === 'cartao') {
+                const cardName = document.getElementById('cardName').value.trim();
+                const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
+                const cardExpiry = document.getElementById('cardExpiry').value;
+                const cardCVV = document.getElementById('cardCVV').value;
+                const cardType = document.getElementById('cardType').value;
+                
+                // Função auxiliar para marcar campo inválido
+                const marcarInvalido = (elemento, mensagem) => {
+                    mostrarResultado(mensagem, 'danger');
+                    elemento.classList.add('is-invalid', 'shake');
+                    elemento.focus();
+                    setTimeout(() => elemento.classList.remove('shake'), 500);
+                };
+                
+                // Validar nome no cartão
+                if (!cardName || cardName.length < 3) {
+                    marcarInvalido(document.getElementById('cardName'), '❌ Informe o nome completo no cartão!');
+                    return;
+                }
+                
+                // Validar número do cartão
+                if (!cardNumber || cardNumber.length < 13 || cardNumber.length > 19) {
+                    marcarInvalido(document.getElementById('cardNumber'), '❌ Número do cartão inválido! (13-19 dígitos)');
+                    return;
+                }
+                
+                // Validar validade
+                if (!cardExpiry || !/^\d{2}\/\d{2}$/.test(cardExpiry)) {
+                    marcarInvalido(document.getElementById('cardExpiry'), '❌ Data de validade inválida! Use o formato MM/AA');
+                    return;
+                }
+                
+                // Validar mês e ano da validade
+                const [mes, ano] = cardExpiry.split('/').map(n => parseInt(n));
+                const anoAtual = new Date().getFullYear() % 100; // Últimos 2 dígitos
+                const mesAtual = new Date().getMonth() + 1;
+                
+                if (mes < 1 || mes > 12) {
+                    marcarInvalido(document.getElementById('cardExpiry'), '❌ Mês inválido! Use 01 a 12');
+                    return;
+                }
+                
+                if (ano < anoAtual || (ano === anoAtual && mes < mesAtual)) {
+                    marcarInvalido(document.getElementById('cardExpiry'), '❌ Cartão vencido! Verifique a validade');
+                    return;
+                }
+                
+                // Validar CVV
+                if (!cardCVV || cardCVV.length < 3 || cardCVV.length > 4) {
+                    marcarInvalido(document.getElementById('cardCVV'), '❌ CVV inválido! Digite 3 ou 4 números');
+                    return;
+                }
+                
+                // Validar tipo do cartão
+                if (!cardType) {
+                    marcarInvalido(document.getElementById('cardType'), '❌ Selecione o tipo do cartão (Crédito ou Débito)!');
+                    return;
+                }
+                
+                // Remover classes de erro se tudo estiver OK
+                document.getElementById('cardName').classList.remove('is-invalid');
+                document.getElementById('cardNumber').classList.remove('is-invalid');
+                document.getElementById('cardExpiry').classList.remove('is-invalid');
+                document.getElementById('cardCVV').classList.remove('is-invalid');
+                document.getElementById('cardType').classList.remove('is-invalid');
             }
             
             mostrarResultado('💰 Processando pagamento...', 'info');

@@ -11,7 +11,7 @@ router.post('/register', [
   body('nome').notEmpty().withMessage('Nome é obrigatório'),
   body('email').isEmail().withMessage('Email inválido'),
   body('senha').isLength({ min: 6 }).withMessage('Senha deve ter no mínimo 6 caracteres'),
-  body('telefone').optional().isMobilePhone('pt-BR').withMessage('Telefone inválido')
+  body('telefone').optional()
 ], async (req, res) => {
   try {
     const errors = validationResult(req);

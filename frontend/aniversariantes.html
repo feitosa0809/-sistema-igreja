@@ -353,6 +353,11 @@
                 const response = await fetch(`${API_URL}/birthdays/month/${month}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
+                
+                if (!response.ok) {
+                    throw new Error(`Erro na requisição: ${response.status}`);
+                }
+                
                 const data = await response.json();
 
                 const meses = [
@@ -393,7 +398,7 @@
                 document.getElementById('birthdayList').innerHTML = `
                     <div class="alert alert-danger">
                         <i class="fas fa-exclamation-triangle"></i>
-                        Erro ao carregar aniversariantes. Tente novamente.
+                        Erro ao carregar aniversariantes: ${error.message}
                     </div>
                 `;
             }

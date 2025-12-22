@@ -82,8 +82,11 @@
                 </div>
                 
                 <div class="px-3">
+                    <div class="sidebar-item" onclick="window.location.href='dashboard.html'">
+                        <i class="fas fa-chart-line me-2"></i> Dashboard Financeiro
+                    </div>
                     <div class="sidebar-item active" onclick="showSection('dashboard')">
-                        <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                        <i class="fas fa-tachometer-alt me-2"></i> Painel Admin
                     </div>
                     <div class="sidebar-item" onclick="showSection('igreja-dados')">
                         <i class="fas fa-church me-2"></i> Dados da Igreja
@@ -100,11 +103,20 @@
                     <div class="sidebar-item" onclick="showSection('campanhas')">
                         <i class="fas fa-bullhorn me-2"></i> Campanhas
                     </div>
+                    <div class="sidebar-item" onclick="window.location.href='relatorios-pdf.html'">
+                        <i class="fas fa-file-pdf me-2"></i> Relatórios PDF
+                    </div>
+                    <div class="sidebar-item" onclick="window.location.href='notificacoes.html'">
+                        <i class="fas fa-bell me-2"></i> Notificações
+                    </div>
+                    <div class="sidebar-item" onclick="window.location.href='configuracoes.html'">
+                        <i class="fas fa-cog me-2"></i> Configurações
+                    </div>
                     <div class="sidebar-item" onclick="window.location.href='aniversariantes.html'">
                         <i class="fas fa-birthday-cake me-2"></i> Aniversariantes
                     </div>
-                    <div class="sidebar-item" onclick="showSection('backup')">
-                        <i class="fas fa-download me-2"></i> Backup
+                    <div class="sidebar-item" onclick="window.location.href='backup.html'">
+                        <i class="fas fa-database me-2"></i> Backup
                     </div>
                     <div class="sidebar-item" onclick="logout()">
                         <i class="fas fa-sign-out-alt me-2"></i> Sair
