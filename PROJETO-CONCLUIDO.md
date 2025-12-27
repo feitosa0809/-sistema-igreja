@@ -65,9 +65,14 @@ Este é um **Sistema de Gestão Financeira para Igrejas** completo, desenvolvido
 - Limpeza automática (30 dias)
 
 #### 7. **Aniversariantes** 🎂
-- Listagem por mês
-- Envio automático às 8h
-- 3 aniversariantes em dezembro
+- Listagem por mês (12 botões)
+- Aniversariantes de hoje
+- Próximos 7 dias
+- Envio automático de emails às 8h
+- 4 aniversariantes em dezembro
+- 23 pessoas com data de nascimento cadastrada
+- Interface moderna com cards animados
+- **Status:** ✅ Totalmente funcional
 
 #### 8. **Configurações** ⚙️
 - Dados da igreja
@@ -88,11 +93,12 @@ tcc1/
 │   ├── GUIA-TCC.md            # ⭐ Guia completo para TCC
 │   └── DADOS-TECNICOS-TCC.md  # ⭐ Dados técnicos para TCC
 │
-├── 🔧 Scripts de Automação (5 arquivos)
+├── 🔧 Scripts de Automação (6 arquivos)
 │   ├── setup-inicial.bat      # Instalação automática
 │   ├── iniciar-sistema.bat    # Inicia o servidor
 │   ├── parar-sistema.bat      # Para o servidor
 │   ├── listar-usuarios.bat    # Lista todos os usuários
+│   ├── abrir-aniversariantes.bat # ⭐ Abre página de aniversariantes
 │   └── limpar-cache-navegador.bat # Limpa cache
 │
 ├── 🖥️ Backend (60+ arquivos)

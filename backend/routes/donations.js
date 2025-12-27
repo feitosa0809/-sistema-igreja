@@ -95,17 +95,22 @@ router.post('/', authMiddleware, [
     const dataFinal = data_doacao || new Date().toISOString().split('T')[0];
     const db = require('../config/database-sqlite');
 
+    // PIX e cartão são confirmados automaticamente
+    const statusInicial = (metodo_pagamento === 'pix' || metodo_pagamento === 'cartao') ? 'confirmado' : 'pendente';
+    const confirmadoPor = (statusInicial === 'confirmado') ? req.user.id : null;
+    const dataConfirmacao = (statusInicial === 'confirmado') ? new Date().toISOString() : null;
+
     let result;
     
     if (tipo === 'dizimo') {
       result = await db.run(
-        'INSERT INTO dizimos (usuario_id, valor, data_pagamento, metodo_pagamento, observacoes) VALUES (?, ?, ?, ?, ?)',
-        [req.user.id, valor, dataFinal, metodo_pagamento, observacoes || '']
+        'INSERT INTO dizimos (usuario_id, valor, data_pagamento, metodo_pagamento, observacoes, status, confirmado_por, data_confirmacao) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [req.user.id, valor, dataFinal, metodo_pagamento, observacoes || '', statusInicial, confirmadoPor, dataConfirmacao]
       );
     } else {
       result = await db.run(
-        'INSERT INTO ofertas (usuario_id, valor, data_oferta, tipo_oferta, metodo_pagamento, observacoes) VALUES (?, ?, ?, ?, ?, ?)',
-        [req.user.id, valor, dataFinal, tipo, metodo_pagamento, observacoes || '']
+        'INSERT INTO ofertas (usuario_id, valor, data_oferta, tipo_oferta, metodo_pagamento, observacoes, status, confirmado_por, data_confirmacao) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [req.user.id, valor, dataFinal, tipo, metodo_pagamento, observacoes || '', statusInicial, confirmadoPor, dataConfirmacao]
       );
     }
 
@@ -171,9 +176,14 @@ router.post('/dizimos', authMiddleware, upload.single('comprovante'), [
     const { valor, data_pagamento, metodo_pagamento, observacoes } = req.body;
     const comprovante_url = req.file ? `/uploads/comprovantes/${req.file.filename}` : null;
 
+    // PIX e cartão são confirmados automaticamente
+    const statusInicial = (metodo_pagamento === 'pix' || metodo_pagamento === 'cartao') ? 'confirmado' : 'pendente';
+    const confirmadoPor = (statusInicial === 'confirmado') ? req.user.id : null;
+    const dataConfirmacao = (statusInicial === 'confirmado') ? new Date().toISOString() : null;
+
     const [result] = await pool.execute(
-      'INSERT INTO dizimos (usuario_id, valor, data_pagamento, metodo_pagamento, comprovante_url, observacoes) VALUES (?, ?, ?, ?, ?, ?)',
-      [req.user.id, valor, data_pagamento, metodo_pagamento, comprovante_url, observacoes]
+      'INSERT INTO dizimos (usuario_id, valor, data_pagamento, metodo_pagamento, comprovante_url, observacoes, status, confirmado_por, data_confirmacao) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [req.user.id, valor, data_pagamento, metodo_pagamento, comprovante_url, observacoes, statusInicial, confirmadoPor, dataConfirmacao]
     );
 
     res.status(201).json({
@@ -234,9 +244,14 @@ router.post('/ofertas', authMiddleware, upload.single('comprovante'), [
     const { valor, data_oferta, tipo_oferta, metodo_pagamento, observacoes } = req.body;
     const comprovante_url = req.file ? `/uploads/comprovantes/${req.file.filename}` : null;
 
+    // PIX e cartão são confirmados automaticamente
+    const statusInicial = (metodo_pagamento === 'pix' || metodo_pagamento === 'cartao') ? 'confirmado' : 'pendente';
+    const confirmadoPor = (statusInicial === 'confirmado') ? req.user.id : null;
+    const dataConfirmacao = (statusInicial === 'confirmado') ? new Date().toISOString() : null;
+
     const [result] = await pool.execute(
-      'INSERT INTO ofertas (usuario_id, valor, data_oferta, tipo_oferta, metodo_pagamento, comprovante_url, observacoes) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [req.user.id, valor, data_oferta, tipo_oferta, metodo_pagamento, comprovante_url, observacoes]
+      'INSERT INTO ofertas (usuario_id, valor, data_oferta, tipo_oferta, metodo_pagamento, comprovante_url, observacoes, status, confirmado_por, data_confirmacao) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [req.user.id, valor, data_oferta, tipo_oferta, metodo_pagamento, comprovante_url, observacoes, statusInicial, confirmadoPor, dataConfirmacao]
     );
 
     res.status(201).json({

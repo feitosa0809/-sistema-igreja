@@ -229,11 +229,22 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/config.js"></script>
     <script>
-        const API_URL = window.API_CONFIG?.BASE_URL || 'http://localhost:3000/api';
+        const API_URL = 'http://localhost:3000/api';
         let currentMonth = new Date().getMonth() + 1;
+
+        // Verificar autenticação - USAR authToken (não token)
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            console.error('Token não encontrado, redirecionando para login...');
+            alert('Você precisa fazer login primeiro!');
+            window.location.href = 'index.html';
+        } else {
+            console.log('Token encontrado:', token.substring(0, 20) + '...');
+        }
 
         // Carregar dados iniciais
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('Página carregada, iniciando busca de aniversariantes...');
             loadStats();
             loadTodayBirthdays();
             loadUpcomingBirthdays();
@@ -256,27 +267,46 @@
         // Carregar estatísticas
         async function loadStats() {
             try {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('authToken');
+                console.log('Carregando estatísticas...');
                 
                 // Aniversariantes de hoje
                 const todayRes = await fetch(`${API_URL}/birthdays/today`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
+                
+                if (!todayRes.ok) {
+                    throw new Error(`Erro ao buscar aniversariantes de hoje: ${todayRes.status}`);
+                }
+                
                 const todayData = await todayRes.json();
+                console.log('Aniversariantes de hoje:', todayData);
                 document.getElementById('totalHoje').textContent = todayData.total;
 
                 // Aniversariantes do mês
                 const monthRes = await fetch(`${API_URL}/birthdays/month/${currentMonth}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
+                
+                if (!monthRes.ok) {
+                    throw new Error(`Erro ao buscar aniversariantes do mês: ${monthRes.status}`);
+                }
+                
                 const monthData = await monthRes.json();
+                console.log('Aniversariantes do mês:', monthData);
                 document.getElementById('totalMes').textContent = monthData.total;
 
                 // Próximos 7 dias
                 const upcomingRes = await fetch(`${API_URL}/birthdays/upcoming`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
+                
+                if (!upcomingRes.ok) {
+                    throw new Error(`Erro ao buscar próximos aniversariantes: ${upcomingRes.status}`);
+                }
+                
                 const upcomingData = await upcomingRes.json();
+                console.log('Próximos aniversariantes:', upcomingData);
                 document.getElementById('totalProximos').textContent = upcomingData.total;
 
             } catch (error) {
@@ -287,11 +317,19 @@
         // Carregar aniversariantes de hoje
         async function loadTodayBirthdays() {
             try {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('authToken');
+                console.log('Buscando aniversariantes de hoje...');
+                
                 const response = await fetch(`${API_URL}/birthdays/today`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
+                
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+                
                 const data = await response.json();
+                console.log('Dados recebidos (hoje):', data);
 
                 if (data.total > 0) {
                     document.getElementById('todaySection').style.display = 'block';
@@ -315,7 +353,7 @@
         // Carregar próximos aniversários
         async function loadUpcomingBirthdays() {
             try {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('authToken');
                 const response = await fetch(`${API_URL}/birthdays/upcoming`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -349,7 +387,9 @@
         // Carregar aniversariantes do mês
         async function loadMonthBirthdays(month) {
             try {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('authToken');
+                console.log(`Buscando aniversariantes do mês ${month}...`);
+                
                 const response = await fetch(`${API_URL}/birthdays/month/${month}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -359,6 +399,7 @@
                 }
                 
                 const data = await response.json();
+                console.log(`Dados recebidos (mês ${month}):`, data);
 
                 const meses = [
                     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',

@@ -1,5 +1,5 @@
 const express = require('express');
-const pool = require('../config/database-sqlite');
+const db = require('../config/database-sqlite');
 const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
@@ -27,7 +27,7 @@ router.get('/month/:mes?', authMiddleware, async (req, res) => {
       ORDER BY strftime('%d', data_nascimento)
     `;
 
-    const rows = await pool.query(query, [mes.toString().padStart(2, '0')]);
+    const rows = await db.query(query, [mes.toString().padStart(2, '0')]);
     const resultados = Array.isArray(rows) ? rows : [];
 
     res.json({
@@ -74,7 +74,7 @@ router.get('/today', authMiddleware, async (req, res) => {
       ORDER BY nome
     `;
 
-    const rows = await pool.query(query, [dia, mes]);
+    const rows = await db.query(query, [dia, mes]);
     const resultados = Array.isArray(rows) ? rows : [];
 
     res.json({
@@ -128,7 +128,7 @@ router.get('/upcoming', authMiddleware, async (req, res) => {
       ORDER BY strftime('%m', data_nascimento), strftime('%d', data_nascimento)
     `;
 
-    const rows = await pool.query(query);
+    const rows = await db.query(query);
     const resultados = Array.isArray(rows) ? rows : [];
     
     const aniversariantesProximos = resultados.filter(row => {
@@ -176,7 +176,7 @@ router.get('/stats', authMiddleware, async (req, res) => {
       ORDER BY mes
     `;
 
-    const rows = await pool.query(query);
+    const rows = await db.query(query);
     const resultados = Array.isArray(rows) ? rows : [];
 
     const meses = [
