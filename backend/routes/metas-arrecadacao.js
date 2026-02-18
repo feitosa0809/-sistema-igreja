@@ -3,7 +3,7 @@ const router = express.Router();
 const db = require('../config/database-sqlite');
 const { authMiddleware: auth } = require('../middleware/auth');
 
-// Listar orçamentos
+// Listar metas de arrecadação
 router.get('/', auth, (req, res) => {
   const { ano } = req.query;
   
@@ -21,15 +21,15 @@ router.get('/', auth, (req, res) => {
 
   sql += ' ORDER BY o.ano DESC, o.mes DESC';
 
-  db.all(sql, params, (err, orcamentos) => {
+  db.all(sql, params, (err, metas) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
-    res.json({ orcamentos });
+    res.json({ metas });
   });
 });
 
-// Buscar orçamento por ID
+// Buscar meta de arrecadação por ID
 router.get('/:id', auth, (req, res) => {
   const { id } = req.params;
   
@@ -40,28 +40,28 @@ router.get('/:id', auth, (req, res) => {
     WHERE o.id = ?
   `;
 
-  db.get(sql, [id], (err, orcamento) => {
+  db.get(sql, [id], (err, meta) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
-    if (!orcamento) {
-      return res.status(404).json({ error: 'Orçamento não encontrado' });
+    if (!meta) {
+      return res.status(404).json({ error: 'Meta de arrecadação não encontrada' });
     }
 
-    // Buscar itens do orçamento
+    // Buscar itens da meta
     const sqlItens = 'SELECT * FROM orcamento_itens WHERE orcamento_id = ?';
     db.all(sqlItens, [id], (err, itens) => {
       if (err) {
         return res.status(500).json({ error: err.message });
       }
       
-      orcamento.itens = itens;
-      res.json(orcamento);
+      meta.itens = itens;
+      res.json(meta);
     });
   });
 });
 
-// Criar orçamento
+// Criar meta de arrecadação
 router.post('/', auth, (req, res) => {
   const { ano, mes, descricao, itens } = req.body;
 
@@ -74,7 +74,7 @@ router.post('/', auth, (req, res) => {
     return res.status(403).json({ error: 'Sem permissão' });
   }
 
-  // Calcular totais
+  // Calcular totais (focado em receitas/arrecadação)
   const total_receita = itens
     .filter(i => i.tipo === 'receita')
     .reduce((sum, i) => sum + parseFloat(i.valor_previsto), 0);
@@ -105,9 +105,9 @@ router.post('/', auth, (req, res) => {
       return res.status(500).json({ error: err.message });
     }
 
-    const orcamentoId = this.lastID;
+    const metaId = this.lastID;
 
-    // Inserir itens do orçamento
+    // Inserir itens da meta de arrecadação
     const sqlItem = `
       INSERT INTO orcamento_itens (
         orcamento_id, categoria, tipo, valor_previsto, observacoes
@@ -117,7 +117,7 @@ router.post('/', auth, (req, res) => {
     const stmt = db.prepare(sqlItem);
     itens.forEach(item => {
       stmt.run([
-        orcamentoId,
+        metaId,
         item.categoria,
         item.tipo,
         parseFloat(item.valor_previsto),
@@ -135,18 +135,18 @@ router.post('/', auth, (req, res) => {
       req.usuario.id,
       'CREATE',
       'orcamentos',
-      orcamentoId,
+      metaId,
       JSON.stringify({ ano, mes, total_receita, total_despesa })
     ]);
 
     res.status(201).json({
-      message: 'Orçamento criado com sucesso',
-      id: orcamentoId
+      message: 'Meta de arrecadação criada com sucesso',
+      id: metaId
     });
   });
 });
 
-// Atualizar item do orçamento com valor realizado
+// Atualizar item da meta com valor realizado/arrecadado
 router.put('/itens/:id/realizado', auth, (req, res) => {
   const { id } = req.params;
   const { valor_realizado } = req.body;
@@ -163,11 +163,11 @@ router.put('/itens/:id/realizado', auth, (req, res) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
-    res.json({ message: 'Valor realizado atualizado' });
+    res.json({ message: 'Valor arrecadado atualizado' });
   });
 });
 
-// Comparar orçado vs realizado
+// Comparar meta vs arrecadado
 router.get('/:id/comparativo', auth, (req, res) => {
   const { id } = req.params;
 
@@ -175,10 +175,10 @@ router.get('/:id/comparativo', auth, (req, res) => {
     SELECT 
       categoria,
       tipo,
-      SUM(valor_previsto) as previsto,
-      SUM(valor_realizado) as realizado,
+      SUM(valor_previsto) as meta,
+      SUM(valor_realizado) as arrecadado,
       SUM(valor_previsto - valor_realizado) as diferenca,
-      AVG(percentual_executado) as percentual_medio
+      AVG(percentual_executado) as percentual_atingido
     FROM orcamento_itens
     WHERE orcamento_id = ?
     GROUP BY categoria, tipo
@@ -189,6 +189,38 @@ router.get('/:id/comparativo', auth, (req, res) => {
       return res.status(500).json({ error: err.message });
     }
     res.json({ comparativo });
+  });
+});
+
+// Estatísticas de metas de arrecadação
+router.get('/stats/resumo', auth, (req, res) => {
+  const { ano } = req.query;
+
+  let whereClause = '1=1';
+  const params = [];
+
+  if (ano) {
+    whereClause += ' AND ano = ?';
+    params.push(ano);
+  }
+
+  const sql = `
+    SELECT 
+      COUNT(*) as total_metas,
+      SUM(total_receita) as total_meta_receita,
+      SUM(total_despesa) as total_meta_despesa,
+      AVG(saldo_previsto) as media_saldo_previsto,
+      status
+    FROM orcamentos
+    WHERE ${whereClause}
+    GROUP BY status
+  `;
+
+  db.all(sql, params, (err, stats) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json({ stats });
   });
 });
 

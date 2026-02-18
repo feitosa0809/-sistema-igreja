@@ -3,7 +3,7 @@ const router = express.Router();
 const db = require('../config/database-sqlite');
 const { authMiddleware: auth } = require('../middleware/auth');
 
-// Listar todas as metas
+// Listar todas as campanhas
 router.get('/', auth, (req, res) => {
   const { status, tipo } = req.query;
   
@@ -28,15 +28,15 @@ router.get('/', auth, (req, res) => {
 
   sql += ' ORDER BY m.data_fim DESC';
 
-  db.all(sql, params, (err, metas) => {
+  db.all(sql, params, (err, campanhas) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
-    res.json({ metas });
+    res.json({ campanhas });
   });
 });
 
-// Buscar meta por ID
+// Buscar campanha por ID
 router.get('/:id', auth, (req, res) => {
   const { id } = req.params;
   
@@ -48,18 +48,18 @@ router.get('/:id', auth, (req, res) => {
     WHERE m.id = ?
   `;
 
-  db.get(sql, [id], (err, meta) => {
+  db.get(sql, [id], (err, campanha) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
-    if (!meta) {
-      return res.status(404).json({ error: 'Meta não encontrada' });
+    if (!campanha) {
+      return res.status(404).json({ error: 'Campanha não encontrada' });
     }
-    res.json(meta);
+    res.json(campanha);
   });
 });
 
-// Criar nova meta
+// Criar nova campanha
 router.post('/', auth, (req, res) => {
   const {
     titulo,
@@ -117,13 +117,13 @@ router.post('/', auth, (req, res) => {
     ]);
 
     res.status(201).json({
-      message: 'Meta criada com sucesso',
+      message: 'Campanha criada com sucesso',
       id: this.lastID
     });
   });
 });
 
-// Atualizar progresso da meta
+// Atualizar progresso da campanha
 router.put('/:id/progresso', auth, (req, res) => {
   const { id } = req.params;
   const { valor_atual } = req.body;
@@ -132,16 +132,16 @@ router.put('/:id/progresso', auth, (req, res) => {
     return res.status(400).json({ error: 'valor_atual é obrigatório' });
   }
 
-  // Buscar meta para verificar se atingiu o objetivo
-  db.get('SELECT valor_meta FROM metas WHERE id = ?', [id], (err, meta) => {
+  // Buscar campanha para verificar se atingiu o objetivo
+  db.get('SELECT valor_meta FROM metas WHERE id = ?', [id], (err, campanha) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
-    if (!meta) {
-      return res.status(404).json({ error: 'Meta não encontrada' });
+    if (!campanha) {
+      return res.status(404).json({ error: 'Campanha não encontrada' });
     }
 
-    const novoStatus = valor_atual >= meta.valor_meta ? 'concluida' : 'ativa';
+    const novoStatus = valor_atual >= campanha.valor_meta ? 'concluida' : 'ativa';
 
     const sql = `
       UPDATE metas SET
@@ -170,14 +170,14 @@ router.put('/:id/progresso', auth, (req, res) => {
       ]);
 
       res.json({ 
-        message: 'Progresso atualizado',
+        message: 'Progresso da campanha atualizado',
         status: novoStatus
       });
     });
   });
 });
 
-// Atualizar meta
+// Atualizar campanha
 router.put('/:id', auth, (req, res) => {
   const { id } = req.params;
   const {
@@ -233,11 +233,11 @@ router.put('/:id', auth, (req, res) => {
       JSON.stringify({ titulo, tipo, valor_meta, status })
     ]);
 
-    res.json({ message: 'Meta atualizada com sucesso' });
+    res.json({ message: 'Campanha atualizada com sucesso' });
   });
 });
 
-// Deletar meta
+// Deletar campanha
 router.delete('/:id', auth, (req, res) => {
   const { id } = req.params;
 
@@ -245,45 +245,66 @@ router.delete('/:id', auth, (req, res) => {
     return res.status(403).json({ error: 'Sem permissão' });
   }
 
-  db.run('DELETE FROM metas WHERE id = ?', [id], function(err) {
+  db.get('SELECT * FROM metas WHERE id = ?', [id], (err, campanha) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
+    if (!campanha) {
+      return res.status(404).json({ error: 'Campanha não encontrada' });
+    }
 
-    // Log
-    const logSql = `
-      INSERT INTO logs_auditoria (usuario_id, acao, tabela, registro_id, detalhes)
-      VALUES (?, ?, ?, ?, ?)
-    `;
-    db.run(logSql, [
-      req.usuario.id,
-      'DELETE',
-      'metas',
-      id,
-      JSON.stringify({ acao: 'deletado' })
-    ]);
+    db.run('DELETE FROM metas WHERE id = ?', [id], function(err) {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
 
-    res.json({ message: 'Meta deletada com sucesso' });
+      // Log
+      const logSql = `
+        INSERT INTO logs_auditoria (usuario_id, acao, tabela, registro_id, detalhes)
+        VALUES (?, ?, ?, ?, ?)
+      `;
+      db.run(logSql, [
+        req.usuario.id,
+        'DELETE',
+        'metas',
+        id,
+        JSON.stringify(campanha)
+      ]);
+
+      res.json({ message: 'Campanha deletada com sucesso' });
+    });
   });
 });
 
-// Estatísticas de metas
+// Estatísticas de campanhas
 router.get('/stats/resumo', auth, (req, res) => {
+  const { tipo } = req.query;
+  
+  let whereClause = '1=1';
+  const params = [];
+
+  if (tipo) {
+    whereClause += ' AND tipo = ?';
+    params.push(tipo);
+  }
+
   const sql = `
     SELECT 
-      COUNT(*) as total_metas,
-      SUM(CASE WHEN status = 'ativa' THEN 1 ELSE 0 END) as ativas,
-      SUM(CASE WHEN status = 'concluida' THEN 1 ELSE 0 END) as concluidas,
-      SUM(CASE WHEN status = 'cancelada' THEN 1 ELSE 0 END) as canceladas,
-      AVG(valor_atual * 100.0 / valor_meta) as percentual_medio
+      COUNT(*) as total_campanhas,
+      SUM(valor_meta) as total_meta,
+      SUM(valor_atual) as total_arrecadado,
+      AVG(valor_atual * 100.0 / valor_meta) as percentual_medio,
+      status
     FROM metas
+    WHERE ${whereClause}
+    GROUP BY status
   `;
 
-  db.get(sql, [], (err, stats) => {
+  db.all(sql, params, (err, stats) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
-    res.json(stats);
+    res.json({ stats });
   });
 });
 

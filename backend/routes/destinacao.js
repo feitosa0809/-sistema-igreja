@@ -6,10 +6,10 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Configurar multer para upload de comprovantes de despesas
+// Configurar multer para upload de comprovantes de destinação dos dízimos
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const dir = 'public/uploads/despesas';
+    const dir = 'public/uploads/destinacao';
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
@@ -17,7 +17,7 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'despesa-' + uniqueSuffix + path.extname(file.originalname));
+    cb(null, 'destinacao-' + uniqueSuffix + path.extname(file.originalname));
   }
 });
 
@@ -37,16 +37,15 @@ const upload = multer({
   }
 });
 
-// Listar todas as despesas (com filtros)
+// Listar todas as destinações dos dízimos (com filtros)
 router.get('/', auth, async (req, res) => {
   try {
-    const { categoria, mes, ano, status, fornecedor } = req.query;
+    const { categoria, mes, ano, status } = req.query;
     
     let sql = `
-      SELECT d.*, u.nome as registrado_por, f.nome as fornecedor_nome
+      SELECT d.*, u.nome as registrado_por
       FROM despesas d
       LEFT JOIN usuarios u ON d.usuario_id = u.id
-      LEFT JOIN fornecedores f ON d.fornecedor_id = f.id
       WHERE 1=1
     `;
     const params = [];
@@ -71,48 +70,42 @@ router.get('/', auth, async (req, res) => {
       params.push(status);
     }
 
-    if (fornecedor) {
-      sql += ' AND d.fornecedor_id = ?';
-      params.push(fornecedor);
-    }
-
     sql += ' ORDER BY d.data_despesa DESC, d.created_at DESC';
 
-    db.all(sql, params, (err, despesas) => {
+    db.all(sql, params, (err, destinacoes) => {
       if (err) {
         return res.status(500).json({ error: err.message });
       }
-      res.json({ despesas });
+      res.json({ destinacoes });
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Buscar despesa por ID
+// Buscar destinação por ID
 router.get('/:id', auth, (req, res) => {
   const { id } = req.params;
   
   const sql = `
-    SELECT d.*, u.nome as registrado_por, f.nome as fornecedor_nome
+    SELECT d.*, u.nome as registrado_por
     FROM despesas d
     LEFT JOIN usuarios u ON d.usuario_id = u.id
-    LEFT JOIN fornecedores f ON d.fornecedor_id = f.id
     WHERE d.id = ?
   `;
 
-  db.get(sql, [id], (err, despesa) => {
+  db.get(sql, [id], (err, destinacao) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
-    if (!despesa) {
-      return res.status(404).json({ error: 'Despesa não encontrada' });
+    if (!destinacao) {
+      return res.status(404).json({ error: 'Destinação não encontrada' });
     }
-    res.json(despesa);
+    res.json(destinacao);
   });
 });
 
-// Criar nova despesa
+// Criar nova destinação de dízimo
 router.post('/', auth, upload.single('comprovante'), async (req, res) => {
   try {
     const {
@@ -122,7 +115,7 @@ router.post('/', auth, upload.single('comprovante'), async (req, res) => {
       data_despesa,
       data_vencimento,
       forma_pagamento,
-      fornecedor_id,
+      beneficiario,
       observacoes,
       recorrente,
       numero_parcelas,
@@ -136,14 +129,14 @@ router.post('/', auth, upload.single('comprovante'), async (req, res) => {
       });
     }
 
-    const comprovante = req.file ? `/uploads/despesas/${req.file.filename}` : null;
+    const comprovante = req.file ? `/uploads/destinacao/${req.file.filename}` : null;
 
     const sql = `
       INSERT INTO despesas (
         descricao, categoria, valor, data_despesa, data_vencimento,
-        forma_pagamento, fornecedor_id, comprovante, observacoes,
+        forma_pagamento, comprovante, observacoes,
         status, usuario_id, recorrente, numero_parcelas, parcela_atual
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const params = [
@@ -153,7 +146,6 @@ router.post('/', auth, upload.single('comprovante'), async (req, res) => {
       data_despesa,
       data_vencimento || null,
       forma_pagamento || 'dinheiro',
-      fornecedor_id || null,
       comprovante,
       observacoes || null,
       'pendente',
@@ -182,7 +174,7 @@ router.post('/', auth, upload.single('comprovante'), async (req, res) => {
       ]);
 
       res.status(201).json({
-        message: 'Despesa registrada com sucesso',
+        message: 'Destinação registrada com sucesso',
         id: this.lastID
       });
     });
@@ -191,7 +183,7 @@ router.post('/', auth, upload.single('comprovante'), async (req, res) => {
   }
 });
 
-// Atualizar despesa
+// Atualizar destinação
 router.put('/:id', auth, upload.single('comprovante'), async (req, res) => {
   try {
     const { id } = req.params;
@@ -202,23 +194,22 @@ router.put('/:id', auth, upload.single('comprovante'), async (req, res) => {
       data_despesa,
       data_vencimento,
       forma_pagamento,
-      fornecedor_id,
       observacoes,
       status
     } = req.body;
 
-    // Buscar despesa atual para log
-    db.get('SELECT * FROM despesas WHERE id = ?', [id], (err, despesaAntiga) => {
+    // Buscar destinação atual para log
+    db.get('SELECT * FROM despesas WHERE id = ?', [id], (err, destinacaoAntiga) => {
       if (err) {
         return res.status(500).json({ error: err.message });
       }
-      if (!despesaAntiga) {
-        return res.status(404).json({ error: 'Despesa não encontrada' });
+      if (!destinacaoAntiga) {
+        return res.status(404).json({ error: 'Destinação não encontrada' });
       }
 
       const comprovante = req.file 
-        ? `/uploads/despesas/${req.file.filename}` 
-        : despesaAntiga.comprovante;
+        ? `/uploads/destinacao/${req.file.filename}` 
+        : destinacaoAntiga.comprovante;
 
       const sql = `
         UPDATE despesas SET
@@ -228,7 +219,6 @@ router.put('/:id', auth, upload.single('comprovante'), async (req, res) => {
           data_despesa = ?,
           data_vencimento = ?,
           forma_pagamento = ?,
-          fornecedor_id = ?,
           comprovante = ?,
           observacoes = ?,
           status = ?,
@@ -243,10 +233,9 @@ router.put('/:id', auth, upload.single('comprovante'), async (req, res) => {
         data_despesa,
         data_vencimento || null,
         forma_pagamento,
-        fornecedor_id || null,
         comprovante,
         observacoes || null,
-        status || despesaAntiga.status,
+        status || destinacaoAntiga.status,
         id
       ];
 
@@ -265,10 +254,10 @@ router.put('/:id', auth, upload.single('comprovante'), async (req, res) => {
           'UPDATE',
           'despesas',
           id,
-          JSON.stringify({ antes: despesaAntiga, depois: { descricao, valor, categoria, status } })
+          JSON.stringify({ antes: destinacaoAntiga, depois: { descricao, valor, categoria, status } })
         ]);
 
-        res.json({ message: 'Despesa atualizada com sucesso' });
+        res.json({ message: 'Destinação atualizada com sucesso' });
       });
     });
   } catch (error) {
@@ -276,22 +265,22 @@ router.put('/:id', auth, upload.single('comprovante'), async (req, res) => {
   }
 });
 
-// Deletar despesa
+// Deletar destinação
 router.delete('/:id', auth, (req, res) => {
   const { id } = req.params;
 
   // Verificar permissão (apenas admin e tesoureiro)
   if (!['admin', 'tesoureiro'].includes(req.usuario.tipo)) {
-    return res.status(403).json({ error: 'Sem permissão para deletar despesas' });
+    return res.status(403).json({ error: 'Sem permissão para deletar destinações' });
   }
 
-  // Buscar despesa para log
-  db.get('SELECT * FROM despesas WHERE id = ?', [id], (err, despesa) => {
+  // Buscar destinação para log
+  db.get('SELECT * FROM despesas WHERE id = ?', [id], (err, destinacao) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
-    if (!despesa) {
-      return res.status(404).json({ error: 'Despesa não encontrada' });
+    if (!destinacao) {
+      return res.status(404).json({ error: 'Destinação não encontrada' });
     }
 
     db.run('DELETE FROM despesas WHERE id = ?', [id], function(err) {
@@ -309,15 +298,15 @@ router.delete('/:id', auth, (req, res) => {
         'DELETE',
         'despesas',
         id,
-        JSON.stringify(despesa)
+        JSON.stringify(destinacao)
       ]);
 
-      res.json({ message: 'Despesa deletada com sucesso' });
+      res.json({ message: 'Destinação deletada com sucesso' });
     });
   });
 });
 
-// Aprovar/Pagar despesa
+// Aprovar/Registrar pagamento da destinação
 router.post('/:id/pagar', auth, (req, res) => {
   const { id } = req.params;
   const { data_pagamento, valor_pago, observacoes_pagamento } = req.body;
@@ -362,11 +351,11 @@ router.post('/:id/pagar', auth, (req, res) => {
       JSON.stringify({ valor_pago, data_pagamento })
     ]);
 
-    res.json({ message: 'Despesa marcada como paga' });
+    res.json({ message: 'Destinação marcada como paga' });
   });
 });
 
-// Estatísticas de despesas
+// Estatísticas de destinação dos dízimos
 router.get('/stats/resumo', auth, (req, res) => {
   const { mes, ano } = req.query;
   
@@ -385,7 +374,7 @@ router.get('/stats/resumo', auth, (req, res) => {
 
   const sql = `
     SELECT 
-      COUNT(*) as total_despesas,
+      COUNT(*) as total_destinacoes,
       SUM(CASE WHEN status = 'pago' THEN valor ELSE 0 END) as total_pago,
       SUM(CASE WHEN status = 'pendente' THEN valor ELSE 0 END) as total_pendente,
       SUM(CASE WHEN status = 'vencido' THEN valor ELSE 0 END) as total_vencido,
@@ -405,7 +394,7 @@ router.get('/stats/resumo', auth, (req, res) => {
     // Estatísticas gerais
     const sqlGeral = `
       SELECT 
-        COUNT(*) as total_despesas,
+        COUNT(*) as total_destinacoes,
         SUM(CASE WHEN status = 'pago' THEN valor ELSE 0 END) as total_pago,
         SUM(CASE WHEN status = 'pendente' THEN valor ELSE 0 END) as total_pendente,
         SUM(CASE WHEN status = 'vencido' THEN valor ELSE 0 END) as total_vencido,

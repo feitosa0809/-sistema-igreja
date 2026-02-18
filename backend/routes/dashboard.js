@@ -7,75 +7,129 @@ const { authMiddleware } = require('../middleware/auth');
 router.use(authMiddleware);
 
 // GET /api/dashboard/resumo-financeiro
-// Retorna resumo financeiro do mês atual
+// Retorna resumo financeiro unificado focado em dízimos e ofertas
 router.get('/resumo-financeiro', async (req, res) => {
   try {
-    const db = require('../config/database-sqlite');
-    
-    // Obter mês e ano atual
     const hoje = new Date();
     const mes = String(hoje.getMonth() + 1).padStart(2, '0');
     const ano = hoje.getFullYear();
     const mesAnoAtual = `${ano}-${mes}`;
 
-    // Total de dízimos do mês
-    const dizimos = await db.all(`
-      SELECT SUM(valor) as total, COUNT(*) as quantidade
-      FROM dizimos 
-      WHERE strftime('%Y-%m', data_pagamento) = ?
-      AND status = 'confirmado'
-    `, [mesAnoAtual]);
+    // Total de dízimos e ofertas do mês
+    const totalArrecadado = await new Promise((resolve, reject) => {
+      db.get(`
+        SELECT 
+          SUM(CASE WHEN tipo = 'dizimo' THEN valor ELSE 0 END) as total_dizimos,
+          SUM(CASE WHEN tipo = 'oferta' THEN valor ELSE 0 END) as total_ofertas,
+          COUNT(CASE WHEN tipo = 'dizimo' THEN 1 END) as qtd_dizimos,
+          COUNT(CASE WHEN tipo = 'oferta' THEN 1 END) as qtd_ofertas
+        FROM donations
+        WHERE strftime('%Y-%m', data_pagamento) = ?
+      `, [mesAnoAtual], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
 
-    // Total de ofertas do mês
-    const ofertas = await db.all(`
-      SELECT SUM(valor) as total, COUNT(*) as quantidade
-      FROM ofertas 
-      WHERE strftime('%Y-%m', data) = ?
-    `, [mesAnoAtual]);
-
-    // Dízimos pendentes
-    const dizimosPendentes = await db.all(`
-      SELECT COUNT(*) as quantidade, SUM(valor) as total
-      FROM dizimos 
-      WHERE status = 'pendente'
-    `);
-
-    // Membros ativos
-    const membrosAtivos = await db.all(`
-      SELECT COUNT(*) as total
-      FROM usuarios 
-      WHERE status = 'ativo'
-    `);
+    // Destinação dos dízimos (onde o dinheiro foi usado)
+    const destinacao = await new Promise((resolve, reject) => {
+      db.get(`
+        SELECT 
+          COUNT(*) as total_registros,
+          SUM(CASE WHEN status = 'pago' THEN valor ELSE 0 END) as total_pago,
+          SUM(CASE WHEN status = 'pendente' THEN valor ELSE 0 END) as total_pendente
+        FROM despesas
+        WHERE strftime('%Y-%m', data_despesa) = ?
+      `, [mesAnoAtual], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
 
     // Campanhas ativas
-    const campanhasAtivas = await db.all(`
-      SELECT COUNT(*) as total
-      FROM campanhas 
-      WHERE status = 'ativa'
-      AND data_fim >= date('now')
-    `);
+    const campanhas = await new Promise((resolve, reject) => {
+      db.all(`
+        SELECT 
+          COUNT(*) as total_ativas,
+          SUM(valor_meta) as total_meta,
+          SUM(valor_atual) as total_arrecadado
+        FROM metas
+        WHERE status = 'ativa'
+        AND date(data_fim) >= date('now')
+      `, [], (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows[0] || {});
+      });
+    });
 
-    const totalDizimos = parseFloat(dizimos[0]?.total || 0);
-    const totalOfertas = parseFloat(ofertas[0]?.total || 0);
+    // Metas de arrecadação do ano
+    const metasAno = await new Promise((resolve, reject) => {
+      db.get(`
+        SELECT 
+          SUM(total_receita) as meta_anual,
+          SUM(total_despesa) as despesa_prevista
+        FROM orcamentos
+        WHERE ano = ? AND status = 'ativo'
+      `, [ano], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+
+    // Membros dizimistas ativos (contribuíram nos últimos 3 meses)
+    const membrosAtivos = await new Promise((resolve, reject) => {
+      db.get(`
+        SELECT COUNT(DISTINCT membro_id) as total
+        FROM donations
+        WHERE tipo = 'dizimo'
+        AND data_pagamento >= date('now', '-3 months')
+      `, [], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+
+    const totalDizimos = parseFloat(totalArrecadado?.total_dizimos || 0);
+    const totalOfertas = parseFloat(totalArrecadado?.total_ofertas || 0);
     const totalMes = totalDizimos + totalOfertas;
 
     res.json({
-      mes: mesAnoAtual,
-      dizimos: {
-        total: totalDizimos.toFixed(2),
-        quantidade: dizimos[0]?.quantidade || 0
+      periodo: {
+        mes: mesAnoAtual,
+        ano: ano
       },
-      ofertas: {
-        total: totalOfertas.toFixed(2),
-        quantidade: ofertas[0]?.quantidade || 0
+      arrecadacao: {
+        dizimos: {
+          total: totalDizimos.toFixed(2),
+          quantidade: totalArrecadado?.qtd_dizimos || 0
+        },
+        ofertas: {
+          total: totalOfertas.toFixed(2),
+          quantidade: totalArrecadado?.qtd_ofertas || 0
+        },
+        total_mes: totalMes.toFixed(2)
       },
-      totalMes: totalMes.toFixed(2),
-      pendentes: {
-        quantidade: dizimosPendentes[0]?.quantidade || 0,
-        total: parseFloat(dizimosPendentes[0]?.total || 0).toFixed(2)
+      destinacao: {
+        total_pago: parseFloat(destinacao?.total_pago || 0).toFixed(2),
+        total_pendente: parseFloat(destinacao?.total_pendente || 0).toFixed(2),
+        registros: destinacao?.total_registros || 0
       },
-      membros: membrosAtivos[0]?.total || 0,
-      campanhas: campanhasAtivas[0]?.total || 0
+      campanhas: {
+        ativas: campanhas?.total_ativas || 0,
+        meta_total: parseFloat(campanhas?.total_meta || 0).toFixed(2),
+        arrecadado: parseFloat(campanhas?.total_arrecadado || 0).toFixed(2),
+        percentual: campanhas?.total_meta > 0 
+          ? ((campanhas.total_arrecadado / campanhas.total_meta) * 100).toFixed(1)
+          : 0
+      },
+      metas_anuais: {
+        meta_receita: parseFloat(metasAno?.meta_anual || 0).toFixed(2),
+        despesa_prevista: parseFloat(metasAno?.despesa_prevista || 0).toFixed(2)
+      },
+      membros_dizimistas: membrosAtivos?.total || 0,
+      transparencia: {
+        saldo_mes: (totalMes - parseFloat(destinacao?.total_pago || 0)).toFixed(2)
+      }
     });
 
   } catch (error) {
@@ -91,7 +145,6 @@ router.get('/resumo-financeiro', async (req, res) => {
 // Retorna evolução financeira dos últimos 6 meses
 router.get('/evolucao-mensal', async (req, res) => {
   try {
-    const db = require('../config/database-sqlite');
     const meses = [];
     
     // Gerar últimos 6 meses
