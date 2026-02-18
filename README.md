@@ -1,12 +1,29 @@
-# 💰 Sistema de Gestão Financeira para Igrejas
+# 💰 Sistema de Gestão Financeira para Igrejas - v2.0
 
-Sistema completo e moderno para gestão de dízimos, ofertas e finanças de igrejas, com interface intuitiva e recursos avançados.
+Sistema completo e moderno para gestão de dízimos, ofertas, despesas e finanças de igrejas, com interface intuitiva e recursos avançados.
 
 [![Node.js](https://img.shields.io/badge/Node.js-14%2B-green)](https://nodejs.org/)
 [![SQLite](https://img.shields.io/badge/Database-SQLite-blue)](https://www.sqlite.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
+[![Version](https://img.shields.io/badge/Version-2.0.0-red)](CHANGELOG.md)
 
-## ✨ Destaques
+## ✨ Novidades da Versão 2.0 (Fevereiro 2026)
+
+### 🆕 9 Novos Módulos Implementados
+
+1. **💸 Módulo de Despesas** - Controle completo de gastos
+2. **🏢 Gestão de Fornecedores** - Cadastro e histórico
+3. **📊 Sistema de Orçamento** - Planejamento financeiro
+4. **🎯 Sistema de Metas** - Acompanhamento de objetivos
+5. **👥 Gestão de Membros** - Cadastro completo com foto
+6. **📝 Logs de Auditoria** - Rastreamento de ações
+7. **🔐 Autenticação 2FA** - Segurança adicional
+8. **📤 Exportação Excel** - Relatórios em planilhas
+9. **🌓 Tema Claro/Escuro** - Alternância de temas
+
+👉 **[Ver todas as novidades detalhadas](novidades.html)** | **[Changelog completo](CHANGELOG.md)**
+
+## 🚀 Destaques do Sistema
 
 - 🎯 **100% Pronto para Uso** - Sistema completo e testado
 - 🚀 **Instalação Simplificada** - Script automatizado de setup

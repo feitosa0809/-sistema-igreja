@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎉 Novas Funcionalidades - Sistema Dízimo v2.0</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        .feature-card {
+            transition: transform 0.3s;
+            height: 100%;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .icon-large {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .stat-badge {
+            font-size: 1.5rem;
+            padding: 10px 20px;
+        }
+        .hero-section {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="hero-section text-center">
+            <h1 class="display-3 mb-3">🎉 Sistema Dízimo v2.0</h1>
+            <p class="lead text-muted">Novas Funcionalidades Implementadas</p>
+            <div class="row mt-4">
+                <div class="col-md-3">
+                    <div class="stat-badge badge bg-primary">9 Módulos</div>
+                    <p class="text-muted mt-2">Novos</p>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-badge badge bg-success">80+ APIs</div>
+                    <p class="text-muted mt-2">Endpoints</p>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-badge badge bg-warning">8 Tabelas</div>
+                    <p class="text-muted mt-2">Banco de Dados</p>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-badge badge bg-danger">100%</div>
+                    <p class="text-muted mt-2">Funcional</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Grid -->
+        <div class="row g-4">
+            <!-- Despesas -->
+            <div class="col-md-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center">
+                        <i class="bi bi-wallet2 icon-large text-danger"></i>
+                        <h4>Módulo de Despesas</h4>
+                        <p class="text-muted">Controle completo de gastos com categorias, fornecedores e comprovantes</p>
+                        <ul class="list-unstyled text-start">
+                            <li>✅ Upload de comprovantes</li>
+                            <li>✅ Filtros avançados</li>
+                            <li>✅ Status: Pago/Pendente/Vencido</li>
+                            <li>✅ Estatísticas em tempo real</li>
+                        </ul>
+                        <a href="despesas.html" class="btn btn-danger">Acessar</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orçamento -->
+            <div class="col-md-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center">
+                        <i class="bi bi-bar-chart icon-large text-primary"></i>
+                        <h4>Sistema de Orçamento</h4>
+                        <p class="text-muted">Planejamento financeiro anual e mensal com gráficos</p>
+                        <ul class="list-unstyled text-start">
+                            <li>✅ Orçado vs Realizado</li>
+                            <li>✅ Gráficos interativos</li>
+                            <li>✅ Receitas e despesas</li>
+                            <li>✅ Múltiplos períodos</li>
+                        </ul>
+                        <a href="orcamento.html" class="btn btn-primary">Acessar</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metas -->
+            <div class="col-md-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center">
+                        <i class="bi bi-trophy icon-large text-warning"></i>
+                        <h4>Sistema de Metas</h4>
+                        <p class="text-muted">Acompanhamento de objetivos e progresso financeiro</p>
+                        <ul class="list-unstyled text-start">
+                            <li>✅ Metas de receita/despesa</li>
+                            <li>✅ Progresso em tempo real</li>
+                            <li>✅ Percentual atingido</li>
+                            <li>✅ Status automático</li>
+                        </ul>
+                        <button class="btn btn-warning" disabled>Em Breve</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Membros -->
+            <div class="col-md-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center">
+                        <i class="bi bi-people icon-large text-success"></i>
+                        <h4>Gestão de Membros</h4>
+                        <p class="text-muted">Cadastro completo com foto e informações da igreja</p>
+                        <ul class="list-unstyled text-start">
+                            <li>✅ Dados pessoais completos</li>
+                            <li>✅ Upload de fotos</li>
+                            <li>✅ Cargo e departamento</li>
+                            <li>✅ Aniversariantes</li>
+                        </ul>
+                        <button class="btn btn-success" disabled>Em Breve</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Auditoria -->
+            <div class="col-md-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center">
+                        <i class="bi bi-shield-check icon-large text-info"></i>
+                        <h4>Logs de Auditoria</h4>
+                        <p class="text-muted">Rastreamento completo de todas as ações do sistema</p>
+                        <ul class="list-unstyled text-start">
+                            <li>✅ Registro automático</li>
+                            <li>✅ Filtros avançados</li>
+                            <li>✅ Exportação CSV</li>
+                            <li>✅ Estatísticas de uso</li>
+                        </ul>
+                        <button class="btn btn-info" disabled>Apenas Admin</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2FA -->
+            <div class="col-md-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center">
+                        <i class="bi bi-lock icon-large text-dark"></i>
+                        <h4>Autenticação 2FA</h4>
+                        <p class="text-muted">Segurança adicional com autenticação de dois fatores</p>
+                        <ul class="list-unstyled text-start">
+                            <li>✅ QR Code automático</li>
+                            <li>✅ Google Authenticator</li>
+                            <li>✅ 10 backup codes</li>
+                            <li>✅ Ativar/Desativar</li>
+                        </ul>
+                        <a href="perfil.html" class="btn btn-dark">Configurar</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Excel -->
+            <div class="col-md-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center">
+                        <i class="bi bi-file-earmark-excel icon-large text-success"></i>
+                        <h4>Exportação Excel</h4>
+                        <p class="text-muted">Exporte todos os dados para planilhas formatadas</p>
+                        <ul class="list-unstyled text-start">
+                            <li>✅ Receitas e despesas</li>
+                            <li>✅ Membros completo</li>
+                            <li>✅ Relatório multi-abas</li>
+                            <li>✅ Formatação automática</li>
+                        </ul>
+                        <a href="relatorios.html" class="btn btn-success">Exportar</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tema -->
+            <div class="col-md-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center">
+                        <i class="bi bi-moon-stars icon-large text-secondary"></i>
+                        <h4>Tema Claro/Escuro</h4>
+                        <p class="text-muted">Alterne entre temas com um clique</p>
+                        <ul class="list-unstyled text-start">
+                            <li>✅ Alternância automática</li>
+                            <li>✅ Persistência local</li>
+                            <li>✅ Transições suaves</li>
+                            <li>✅ Todas as páginas</li>
+                        </ul>
+                        <button class="btn btn-secondary" onclick="toggleTheme()">Alternar Tema</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fornecedores -->
+            <div class="col-md-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center">
+                        <i class="bi bi-building icon-large text-primary"></i>
+                        <h4>Gestão de Fornecedores</h4>
+                        <p class="text-muted">Cadastro e controle de fornecedores</p>
+                        <ul class="list-unstyled text-start">
+                            <li>✅ CRUD completo</li>
+                            <li>✅ CNPJ e contatos</li>
+                            <li>✅ Histórico de gastos</li>
+                            <li>✅ Total por fornecedor</li>
+                        </ul>
+                        <a href="despesas.html" class="btn btn-primary">Ver Fornecedores</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Details -->
+        <div class="card mt-5">
+            <div class="card-header bg-dark text-white">
+                <h3><i class="bi bi-code-square"></i> Detalhes Técnicos</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>📦 Novas Dependências</h5>
+                        <ul>
+                            <li><code>exceljs</code> - Geração de planilhas Excel</li>
+                            <li><code>speakeasy</code> - Autenticação 2FA (TOTP)</li>
+                            <li><code>qrcode</code> - Geração de QR Codes</li>
+                            <li><code>excel4node</code> - Manipulação avançada Excel</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>🗄️ Novas Tabelas</h5>
+                        <ul>
+                            <li><code>despesas</code> - Controle de despesas</li>
+                            <li><code>fornecedores</code> - Cadastro de fornecedores</li>
+                            <li><code>orcamentos</code> - Planejamento financeiro</li>
+                            <li><code>orcamento_itens</code> - Itens do orçamento</li>
+                            <li><code>logs_auditoria</code> - Logs do sistema</li>
+                            <li><code>membros</code> - Cadastro de membros</li>
+                            <li><code>metas</code> - Metas financeiras</li>
+                            <li><code>usuario_2fa</code> - Configuração 2FA</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Start -->
+        <div class="card mt-4 mb-5">
+            <div class="card-header bg-success text-white">
+                <h3><i class="bi bi-rocket"></i> Começar a Usar</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>1️⃣ Atualizar Sistema</h5>
+                        <pre class="bg-light p-3 rounded"><code>atualizar-sistema.bat</code></pre>
+                        
+                        <h5 class="mt-3">2️⃣ Iniciar Servidor</h5>
+                        <pre class="bg-light p-3 rounded"><code>iniciar-sistema.bat</code></pre>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>3️⃣ Acessar Novas Páginas</h5>
+                        <ul class="list-group">
+                            <li class="list-group-item">
+                                <a href="despesas.html">💸 Despesas</a>
+                            </li>
+                            <li class="list-group-item">
+                                <a href="orcamento.html">📊 Orçamento</a>
+                            </li>
+                            <li class="list-group-item">
+                                <a href="relatorios.html">📄 Relatórios</a>
+                            </li>
+                            <li class="list-group-item">
+                                <a href="perfil.html">🔐 Configurar 2FA</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center text-white mb-4">
+            <p class="lead">📖 Leia <a href="NOVAS-FUNCIONALIDADES.md" class="text-white"><strong>NOVAS-FUNCIONALIDADES.md</strong></a> para documentação completa</p>
+            <p>Sistema desenvolvido em Fevereiro de 2026 | Versão 2.0.0</p>
+            <a href="dashboard.html" class="btn btn-light btn-lg mt-3">
+                <i class="bi bi-speedometer2"></i> Ir para o Dashboard
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Aplicar tema salvo
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+
+    <link rel="stylesheet" href="assets/css/theme-dark.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

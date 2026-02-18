@@ -17,6 +17,14 @@ const backupRoutes = require('./routes/backup');
 const dashboardRoutes = require('./routes/dashboard');
 const pdfRoutes = require('./routes/pdf');
 const notificacoesRoutes = require('./routes/notificacoes');
+const despesasRoutes = require('./routes/despesas');
+const fornecedoresRoutes = require('./routes/fornecedores');
+const orcamentoRoutes = require('./routes/orcamento');
+const auditoriaRoutes = require('./routes/auditoria');
+const membrosRoutes = require('./routes/membros');
+const metasRoutes = require('./routes/metas');
+const exportExcelRoutes = require('./routes/export-excel');
+const twoFactorRoutes = require('./routes/2fa');
 
 console.log('⚙️ Iniciando Express...');
 const app = express();
@@ -46,6 +54,14 @@ app.use('/api/backup', backupRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/pdf', pdfRoutes);
 app.use('/api/notificacoes', notificacoesRoutes);
+app.use('/api/despesas', despesasRoutes);
+app.use('/api/fornecedores', fornecedoresRoutes);
+app.use('/api/orcamento', orcamentoRoutes);
+app.use('/api/auditoria', auditoriaRoutes);
+app.use('/api/membros', membrosRoutes);
+app.use('/api/metas', metasRoutes);
+app.use('/api/export', exportExcelRoutes);
+app.use('/api/2fa', twoFactorRoutes);
 console.log('✅ Rotas registradas');
 
 // Rota de saúde da API

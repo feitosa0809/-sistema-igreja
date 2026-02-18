@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Despesas - Sistema Dízimo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="dashboard.html">
+                <i class="bi bi-church"></i> Sistema Dízimo
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.html">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="pagamentos.html">
+                            <i class="bi bi-cash-coin"></i> Receitas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="despesas.html">
+                            <i class="bi bi-wallet2"></i> Despesas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="orcamento.html">
+                            <i class="bi bi-bar-chart"></i> Orçamento
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> <span id="userName"></span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="perfil.html">Meu Perfil</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="logout()">Sair</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2><i class="bi bi-wallet2"></i> Gestão de Despesas</h2>
+                    <div>
+                        <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#fornecedorModal">
+                            <i class="bi bi-building"></i> Fornecedores
+                        </button>
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#despesaModal">
+                            <i class="bi bi-plus-circle"></i> Nova Despesa
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Estatísticas -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card border-danger">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">Total Pago</h6>
+                                <h3 class="text-danger" id="totalPago">R$ 0,00</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-warning">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">Pendente</h6>
+                                <h3 class="text-warning" id="totalPendente">R$ 0,00</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-secondary">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">Vencido</h6>
+                                <h3 class="text-secondary" id="totalVencido">R$ 0,00</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-primary">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">Total Geral</h6>
+                                <h3 class="text-primary" id="totalGeral">R$ 0,00</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtros -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-2">
+                                <select class="form-select" id="filtroCategoria">
+                                    <option value="">Todas Categorias</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select class="form-select" id="filtroStatus">
+                                    <option value="">Todos Status</option>
+                                    <option value="pendente">Pendente</option>
+                                    <option value="pago">Pago</option>
+                                    <option value="vencido">Vencido</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select class="form-select" id="filtroMes">
+                                    <option value="">Todos Meses</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select class="form-select" id="filtroAno">
+                                    <option value="">Todos Anos</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-primary" onclick="filtrarDespesas()">
+                                    <i class="bi bi-funnel"></i> Filtrar
+                                </button>
+                                <button class="btn btn-secondary" onclick="limparFiltros()">
+                                    <i class="bi bi-x-circle"></i> Limpar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lista de Despesas -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Descrição</th>
+                                        <th>Categoria</th>
+                                        <th>Fornecedor</th>
+                                        <th>Valor</th>
+                                        <th>Status</th>
+                                        <th>Vencimento</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="despesasList">
+                                    <tr>
+                                        <td colspan="8" class="text-center">
+                                            <div class="spinner-border" role="status">
+                                                <span class="visually-hidden">Carregando...</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nova/Editar Despesa -->
+    <div class="modal fade" id="despesaModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="despesaModalLabel">Nova Despesa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="despesaForm">
+                        <input type="hidden" id="despesaId">
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label">Descrição *</label>
+                                <input type="text" class="form-control" id="descricao" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Categoria *</label>
+                                <select class="form-select" id="categoria" required>
+                                    <option value="">Selecione...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Valor *</label>
+                                <input type="number" class="form-control" id="valor" step="0.01" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Data Despesa *</label>
+                                <input type="date" class="form-control" id="dataDespesa" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Vencimento</label>
+                                <input type="date" class="form-control" id="dataVencimento">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Fornecedor</label>
+                                <select class="form-select" id="fornecedorId">
+                                    <option value="">Nenhum</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Forma Pagamento</label>
+                                <select class="form-select" id="formaPagamento">
+                                    <option value="dinheiro">Dinheiro</option>
+                                    <option value="pix">PIX</option>
+                                    <option value="debito">Débito</option>
+                                    <option value="credito">Crédito</option>
+                                    <option value="transferencia">Transferência</option>
+                                    <option value="boleto">Boleto</option>
+                                </select>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Comprovante</label>
+                                <input type="file" class="form-control" id="comprovante" accept="image/*,application/pdf">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Observações</label>
+                                <textarea class="form-control" id="observacoes" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="salvarDespesa()">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Fornecedores -->
+    <div class="modal fade" id="fornecedorModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Gerenciar Fornecedores</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#novoFornecedorModal">
+                        <i class="bi bi-plus"></i> Novo Fornecedor
+                    </button>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>CNPJ</th>
+                                    <th>Telefone</th>
+                                    <th>Tipo</th>
+                                    <th>Total Gasto</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fornecedoresList"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/despesas.js"></script>
+</body>
+</html>
