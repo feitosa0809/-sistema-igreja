@@ -19,7 +19,12 @@ router.post('/register', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { nome, email, senha, telefone, endereco, data_nascimento } = req.body;
+    const { nome, senha, telefone, endereco, data_nascimento } = req.body;
+    const email = String(req.body.email || '').trim().toLowerCase();
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email é obrigatório' });
+    }
 
     // Verificar se email já existe
     const existingUser = await pool.query(
@@ -75,7 +80,12 @@ router.post('/login', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email, senha } = req.body;
+    const senha = req.body.senha;
+    const email = String(req.body.email || '').trim().toLowerCase();
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email é obrigatório' });
+    }
 
     // Buscar usuário
     const rows = await pool.query(

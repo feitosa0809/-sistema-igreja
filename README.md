@@ -39,20 +39,7 @@ Sistema completo e moderno para gestão de dízimos, ofertas, despesas e finanç
 
 ## � Instalação Rápida (2 minutos)
 
-### Método 1: Script Automatizado (Recomendado - Windows)
-
-```bash
-# Duplo clique em:
-setup-inicial.bat
-```
-
-Pronto! O script irá:
-1. ✅ Verificar Node.js
-2. ✅ Instalar dependências
-3. ✅ Criar arquivo .env
-4. ✅ Gerar chave secreta JWT
-
-### Método 2: Manual
+### Método Manual
 
 ```bash
 # 1. Instalar dependências
@@ -76,18 +63,14 @@ Abra seu navegador em: **http://localhost:3000**
 ## 📖 Documentação Completa
 
 - 📘 **[Guia de Instalação Completo](INSTALACAO.md)** - Passo a passo detalhado
-- 🎯 **[Guia Rápido de Uso](GUIA-RAPIDO.md)** - Como usar todas as funcionalidades
+- 📝 **[Changelog](CHANGELOG.md)** - Histórico de mudanças
 
 ## ⚡ Início Rápido
 
 ### Iniciar o Sistema
 
-**Windows:**
 ```bash
-# Duplo clique em:
-iniciar-sistema.bat
-
-# Ou manualmente:
+# Manualmente:
 cd backend
 npm start
 ```
@@ -96,10 +79,9 @@ Acesse: `http://localhost:3000`
 
 ### Parar o Sistema
 
-**Windows:**
 ```bash
-# Duplo clique em:
-parar-sistema.bat
+# Encerrar no terminal
+Ctrl + C
 ```
 
 ## 📁 Estrutura do Projeto
@@ -130,11 +112,8 @@ tcc1/
 │   ├── configuracoes.html    # Configurações da igreja
 │   └── admin.html            # Painel administrativo
 │
-├── setup-inicial.bat          # Script de instalação automática
-├── iniciar-sistema.bat        # Atalho para iniciar
-├── parar-sistema.bat          # Atalho para parar
 ├── INSTALACAO.md             # Guia completo de instalação
-├── GUIA-RAPIDO.md            # Guia rápido de uso
+├── CHANGELOG.md              # Histórico de alterações
 └── README.md                 # Este arquivo
 ```
 
@@ -413,9 +392,6 @@ O sistema se adapta perfeitamente a:
 # Encontrar e matar processo
 netstat -ano | findstr :3000
 taskkill /PID <numero> /F
-
-# Ou use:
-parar-sistema.bat
 ```
 
 **Linux/Mac:**

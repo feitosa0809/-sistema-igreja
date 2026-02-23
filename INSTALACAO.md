@@ -57,7 +57,7 @@ npm start
 
 # Ou use o script do diretório raiz:
 cd ..
-npm run start:backend
+npm start
 ```
 
 Você deverá ver:
@@ -192,17 +192,7 @@ SMTP_SECURE=false
 - Backups ficam em `backend/backups/`
 - Você também pode fazer backup manual em **"Configurações > Backup"**
 
-## 🔧 Scripts Úteis
-
-### Iniciar Sistema (Windows)
-
-Duplo clique em:
-- `iniciar-sistema.bat` - Inicia o backend
-
-### Parar Sistema (Windows)
-
-Duplo clique em:
-- `parar-sistema.bat` - Para todos os processos Node.js
+## 🔧 Comandos Úteis
 
 ### Via Linha de Comando
 
@@ -212,7 +202,7 @@ cd backend
 npm start
 
 # Ou do diretório raiz:
-npm run start:backend
+npm start
 ```
 
 ## 🐛 Solução de Problemas

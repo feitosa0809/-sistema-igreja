@@ -1,5 +1,24 @@
 # 🔄 CHANGELOG - Sistema de Gestão Financeira para Igrejas
 
+## [2.0.1] - 2026-02-23
+
+### 🔐 Correções
+- Normalização de email no login e cadastro (`trim` + lowercase) para evitar falhas por espaços e caixa alta
+- Validação adicional para rejeitar email vazio com mensagem explícita na API de autenticação
+
+### 🧹 Limpeza do Projeto
+- Removidos arquivos auxiliares Windows (`.bat`) não essenciais para execução via Node/NPM
+- Removidos documentos técnicos/operacionais redundantes que não impactam o funcionamento da aplicação
+
+### 📝 Documentação
+- `README.md` atualizado para fluxo único de execução manual (`npm start`)
+- `INSTALACAO.md` atualizado com comandos válidos do projeto (remoção de referências antigas)
+- Removidas referências a arquivos excluídos na documentação
+
+### ✅ Compatibilidade
+- Backend e frontend mantidos sem alteração funcional fora da autenticação
+- Execução principal preservada em `node backend/server.js` e `npm start`
+
 ## [2.0.0] - 2026-02-17
 
 ### 🎉 Principais Adições

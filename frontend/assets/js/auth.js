@@ -3,9 +3,10 @@ let currentUser = null;
 
 async function login(email, password) {
     try {
+        const normalizedEmail = String(email || '').trim().toLowerCase();
         const data = await apiService.call('/auth/login', {
             method: 'POST',
-            body: JSON.stringify({ email, senha: password })
+            body: JSON.stringify({ email: normalizedEmail, senha: password })
         });
 
         apiService.setToken(data.token);
@@ -30,9 +31,13 @@ async function login(email, password) {
 
 async function register(userData) {
     try {
+        const normalizedUserData = {
+            ...userData,
+            email: String(userData.email || '').trim().toLowerCase()
+        };
         const data = await apiService.call('/auth/register', {
             method: 'POST',
-            body: JSON.stringify(userData)
+            body: JSON.stringify(normalizedUserData)
         });
 
         apiService.setToken(data.token);
