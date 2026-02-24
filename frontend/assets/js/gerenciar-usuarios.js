@@ -4,7 +4,7 @@ let todosUsuarios = [];
 // Carregar usuários ao abrir a seção
 async function carregarUsuarios() {
     try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('authToken');
         if (!token) {
             window.location.href = 'index.html';
             return;
@@ -166,7 +166,7 @@ async function alterarTipo(id, novoTipo, nome) {
         
         if (!resultado.isConfirmed) return;
         
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('authToken');
         const response = await fetch(`${API_URL}/usuarios/${id}/tipo`, {
             method: 'PUT',
             headers: {
@@ -218,7 +218,7 @@ async function alterarStatus(id, novoStatus, nome) {
         
         if (!resultado.isConfirmed) return;
         
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('authToken');
         const response = await fetch(`${API_URL}/usuarios/${id}/status`, {
             method: 'PUT',
             headers: {
@@ -273,7 +273,7 @@ async function confirmarExclusao(id, nome) {
         
         if (!resultado.isConfirmed) return;
         
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('authToken');
         const response = await fetch(`${API_URL}/usuarios/${id}`, {
             method: 'DELETE',
             headers: {

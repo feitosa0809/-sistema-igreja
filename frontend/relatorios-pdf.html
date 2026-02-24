@@ -327,7 +327,7 @@
                     }
                 });
 
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('authToken');
                 const response = await fetch(`${API_URL}/pdf/${tipoRelatorioAtual}`, {
                     method: 'POST',
                     headers: {
@@ -364,7 +364,7 @@
         // Carregar lista de relatórios
         async function carregarRelatorios() {
             try {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('authToken');
                 const response = await fetch(`${API_URL}/pdf/listar`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -423,7 +423,7 @@
 
         // Download relatório
         function downloadRelatorio(filename) {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('authToken');
             window.open(`${API_URL}/pdf/download/${filename}?token=${token}`, '_blank');
         }
 
@@ -443,7 +443,7 @@
 
                 if (!result.isConfirmed) return;
 
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('authToken');
                 const response = await fetch(`${API_URL}/pdf/${filename}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }

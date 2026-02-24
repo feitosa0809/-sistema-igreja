@@ -276,7 +276,7 @@
             try {
                 showLoading();
                 
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('authToken');
                 if (!token) {
                     window.location.href = 'index.html';
                     return;
@@ -463,7 +463,7 @@
                 try {
                     showLoading();
                     
-                    const token = localStorage.getItem('token');
+                    const token = localStorage.getItem('authToken');
                     const response = await fetch(`${CONFIG.API_BASE_URL}/usuarios/${userId}/tipo`, {
                         method: 'PUT',
                         headers: {
@@ -520,7 +520,7 @@
                 try {
                     showLoading();
                     
-                    const token = localStorage.getItem('token');
+                    const token = localStorage.getItem('authToken');
                     const response = await fetch(`${CONFIG.API_BASE_URL}/usuarios/${userId}/status`, {
                         method: 'PUT',
                         headers: {

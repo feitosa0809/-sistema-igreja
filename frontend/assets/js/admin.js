@@ -3,7 +3,7 @@ const API_URL = 'http://localhost:3000/api';
 
 class AdminDashboard {
     constructor() {
-        this.token = localStorage.getItem('token');
+        this.token = localStorage.getItem('authToken');
         this.user = JSON.parse(localStorage.getItem('user') || '{}');
         this.init();
     }
@@ -318,7 +318,7 @@ function showAddCampaignModal() {
 
 function logout() {
     if (confirm('Tem certeza que deseja sair?')) {
-        localStorage.removeItem('token');
+        localStorage.removeItem('authToken');
         localStorage.removeItem('user');
         window.location.href = 'index.html';
     }

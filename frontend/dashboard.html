@@ -345,7 +345,7 @@
         // Carregar resumo financeiro
         async function carregarResumoFinanceiro() {
             try {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('authToken');
                 const response = await fetch(`${API_URL}/dashboard/resumo-financeiro`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -369,7 +369,7 @@
         // Carregar evolução mensal
         async function carregarEvolucaoMensal() {
             try {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('authToken');
                 const response = await fetch(`${API_URL}/dashboard/evolucao-mensal`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -445,7 +445,7 @@
         // Carregar distribuição por tipos
         async function carregarDistribuicaoTipos() {
             try {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('authToken');
                 const response = await fetch(`${API_URL}/dashboard/distribuicao-tipos`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -494,7 +494,7 @@
         // Carregar campanhas em progresso
         async function carregarCampanhasProgresso() {
             try {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('authToken');
                 const response = await fetch(`${API_URL}/dashboard/campanhas-progresso`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -541,7 +541,7 @@
         // Carregar top dizimistas
         async function carregarTopDizimistas() {
             try {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('authToken');
                 const response = await fetch(`${API_URL}/dashboard/top-dizimistas`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -577,7 +577,7 @@
         // Carregar aniversariantes
         async function carregarAniversariantes() {
             try {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('authToken');
                 const response = await fetch(`${API_URL}/dashboard/aniversariantes-mes`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });

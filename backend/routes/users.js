@@ -30,14 +30,17 @@ router.get('/profile', authMiddleware, async (req, res) => {
 router.put('/profile', authMiddleware, async (req, res) => {
   try {
     const { nome, email, telefone, endereco, data_nascimento } = req.body;
-    
-    console.log('Dados recebidos para atualização:', { nome, email, telefone, endereco, data_nascimento });
+    const normalizedNome = typeof nome === 'string' ? nome.trim() : nome;
+    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : email;
+    const normalizedTelefone = typeof telefone === 'string' ? telefone.trim() : telefone;
+    const normalizedEndereco = typeof endereco === 'string' ? endereco.trim() : endereco;
+    const normalizedDataNascimento = typeof data_nascimento === 'string' ? data_nascimento.trim() : data_nascimento;
     
     // Se email foi alterado, verificar se não existe outro usuário com esse email
-    if (email) {
+    if (normalizedEmail) {
       const [existingUser] = await pool.execute(
         'SELECT id FROM usuarios WHERE email = ? AND id != ?',
-        [email, req.user.id]
+        [normalizedEmail, req.user.id]
       );
 
       if (existingUser.length > 0) {
@@ -49,35 +52,35 @@ router.put('/profile', authMiddleware, async (req, res) => {
     const updates = [];
     const values = [];
     
-    if (nome !== undefined && nome !== '') {
+    if (normalizedNome !== undefined && normalizedNome !== '') {
       updates.push('nome = ?');
-      values.push(nome);
+      values.push(normalizedNome);
     }
-    if (email !== undefined && email !== '') {
+    if (normalizedEmail !== undefined && normalizedEmail !== '') {
       updates.push('email = ?');
-      values.push(email);
+      values.push(normalizedEmail);
     }
-    if (telefone !== undefined) {
+    if (normalizedTelefone !== undefined) {
       updates.push('telefone = ?');
-      values.push(telefone || null);
+      values.push(normalizedTelefone || null);
     }
-    if (endereco !== undefined) {
+    if (normalizedEndereco !== undefined) {
       updates.push('endereco = ?');
-      values.push(endereco || null);
+      values.push(normalizedEndereco || null);
     }
-    if (data_nascimento !== undefined) {
+    if (normalizedDataNascimento !== undefined) {
       updates.push('data_nascimento = ?');
-      values.push(data_nascimento || null);
+      values.push(normalizedDataNascimento || null);
     }
     
     if (updates.length === 0) {
       return res.status(400).json({ error: 'Nenhum campo para atualizar' });
     }
     
+    updates.push('data_atualizacao = CURRENT_TIMESTAMP');
     values.push(req.user.id);
     
     const query = `UPDATE usuarios SET ${updates.join(', ')} WHERE id = ?`;
-    console.log('Query de atualização:', query, values);
     
     const [result] = await pool.execute(query, values);
 
@@ -85,7 +88,6 @@ router.put('/profile', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Usuário não encontrado' });
     }
 
-    console.log('Perfil atualizado com sucesso');
     res.json({ message: 'Perfil atualizado com sucesso' });
 
   } catch (error) {

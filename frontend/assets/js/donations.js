@@ -275,10 +275,7 @@ function showAdmin() {
 }
 
 function showProfile() {
-    document.getElementById('content').innerHTML = `
-        <h2><i class="fas fa-user-edit"></i> Meu Perfil</h2>
-        <p>Seção de perfil em desenvolvimento...</p>
-    `;
+    window.location.href = 'perfil.html';
 }
 
 // Utility functions
