@@ -285,6 +285,36 @@ router.get('/campanhas', authMiddleware, async (req, res) => {
   }
 });
 
+// Criar campanha (admin/pastor)
+router.post('/campanhas', authMiddleware, requireRole(['admin', 'pastor']), [
+  body('nome').notEmpty().withMessage('Nome da campanha é obrigatório'),
+  body('data_inicio').isDate().withMessage('Data de início inválida'),
+  body('data_fim').isDate().withMessage('Data de fim inválida'),
+  body('meta_valor').isFloat({ min: 0 }).withMessage('Meta deve ser um valor positivo')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { nome, descricao, meta_valor, data_inicio, data_fim } = req.body;
+
+    const [result] = await pool.execute(
+      'INSERT INTO campanhas (nome, descricao, meta_valor, data_inicio, data_fim, criado_por, status) VALUES (?, ?, ?, ?, ?, ?, "ativa")',
+      [nome, descricao || '', meta_valor, data_inicio, data_fim, req.user.id]
+    );
+
+    res.status(201).json({
+      message: 'Campanha criada com sucesso',
+      id: result.insertId
+    });
+  } catch (error) {
+    console.error('Error creating campanha:', error);
+    res.status(500).json({ error: 'Erro ao criar campanha' });
+  }
+});
+
 // Contribuir para campanha
 router.post('/campanhas/:id/contribuir', authMiddleware, upload.single('comprovante'), [
   body('valor').isFloat({ min: 0.01 }).withMessage('Valor deve ser maior que 0'),

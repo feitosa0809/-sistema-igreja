@@ -329,6 +329,29 @@ function showContribuirModal(campanhaId, campanhaName) {
                                     <option value="transferencia">Transferência</option>
                                 </select>
                             </div>
+                            <div id="camposCartao" class="border rounded p-3 mb-3" style="display: none;">
+                                <h6 class="mb-3"><i class="fas fa-credit-card"></i> Dados do Cartão</h6>
+                                <div class="mb-2">
+                                    <label for="contribuicaoNomeCartao" class="form-label">Nome no Cartão</label>
+                                    <input type="text" class="form-control" id="contribuicaoNomeCartao" placeholder="Nome impresso no cartão">
+                                </div>
+                                <div class="mb-2">
+                                    <label for="contribuicaoNumeroCartao" class="form-label">Número do Cartão</label>
+                                    <input type="text" class="form-control" id="contribuicaoNumeroCartao" maxlength="19" placeholder="0000 0000 0000 0000">
+                                    <small id="bandeiraCartaoHint" class="text-muted">Bandeira: não identificada</small>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6 mb-2">
+                                        <label for="contribuicaoValidadeCartao" class="form-label">Validade (MM/AA)</label>
+                                        <input type="text" class="form-control" id="contribuicaoValidadeCartao" maxlength="5" placeholder="12/30">
+                                    </div>
+                                    <div class="col-6 mb-2">
+                                        <label for="contribuicaoCvvCartao" class="form-label">Código de Segurança</label>
+                                        <input type="password" class="form-control" id="contribuicaoCvvCartao" maxlength="4" placeholder="123">
+                                    </div>
+                                </div>
+                                <small class="text-muted">Por segurança, o CVV e o número completo do cartão não são armazenados.</small>
+                            </div>
                             <div class="mb-3">
                                 <label for="contribuicaoComprovante" class="form-label">Comprovante (opcional)</label>
                                 <input type="file" class="form-control" id="contribuicaoComprovante" accept="image/*">
@@ -352,16 +375,125 @@ function showContribuirModal(campanhaId, campanhaName) {
     
     const modal = new bootstrap.Modal(document.getElementById('contribuirModal'));
     modal.show();
+
+    const metodoSelect = document.getElementById('contribuicaoMetodo');
+    const camposCartao = document.getElementById('camposCartao');
+    const numeroCartaoInput = document.getElementById('contribuicaoNumeroCartao');
+    const validadeCartaoInput = document.getElementById('contribuicaoValidadeCartao');
+    const bandeiraCartaoHint = document.getElementById('bandeiraCartaoHint');
+
+    const detectarBandeira = (numero) => {
+        if (/^4\d{12}(\d{3})?$/.test(numero)) return 'visa';
+        if (/^5[1-5]\d{14}$/.test(numero)) return 'mastercard';
+        return 'desconhecida';
+    };
+
+    const validarLuhn = (numero) => {
+        let soma = 0;
+        let deveDobrar = false;
+
+        for (let index = numero.length - 1; index >= 0; index--) {
+            let digito = parseInt(numero.charAt(index), 10);
+            if (deveDobrar) {
+                digito *= 2;
+                if (digito > 9) digito -= 9;
+            }
+            soma += digito;
+            deveDobrar = !deveDobrar;
+        }
+
+        return soma % 10 === 0;
+    };
+
+    metodoSelect.addEventListener('change', () => {
+        const isCartao = metodoSelect.value === 'cartao';
+        camposCartao.style.display = isCartao ? 'block' : 'none';
+    });
+
+    numeroCartaoInput.addEventListener('input', (e) => {
+        const somenteDigitos = e.target.value.replace(/\D/g, '').slice(0, 16);
+        const formatado = somenteDigitos.replace(/(\d{4})(?=\d)/g, '$1 ');
+        e.target.value = formatado;
+
+        const bandeira = detectarBandeira(somenteDigitos);
+        const labelBandeira = bandeira === 'mastercard' ? 'Mastercard' : bandeira === 'visa' ? 'Visa' : 'não identificada';
+        bandeiraCartaoHint.textContent = `Bandeira: ${labelBandeira}`;
+        bandeiraCartaoHint.className = bandeira === 'desconhecida' ? 'text-muted' : 'text-success';
+    });
+
+    validadeCartaoInput.addEventListener('input', (e) => {
+        const somenteDigitos = e.target.value.replace(/\D/g, '').slice(0, 4);
+        if (somenteDigitos.length >= 3) {
+            e.target.value = `${somenteDigitos.slice(0, 2)}/${somenteDigitos.slice(2)}`;
+        } else {
+            e.target.value = somenteDigitos;
+        }
+    });
     
     // Add form submit handler
     document.getElementById('contribuirForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         
         try {
+            const metodoPagamento = document.getElementById('contribuicaoMetodo').value;
+            let observacoes = document.getElementById('contribuicaoObservacoes').value;
+
+            if (metodoPagamento === 'cartao') {
+                const nomeCartao = document.getElementById('contribuicaoNomeCartao').value.trim();
+                const numeroCartao = document.getElementById('contribuicaoNumeroCartao').value.replace(/\D/g, '');
+                const validadeCartao = document.getElementById('contribuicaoValidadeCartao').value.trim();
+                const cvvCartao = document.getElementById('contribuicaoCvvCartao').value.trim();
+
+                if (!nomeCartao || !numeroCartao || !validadeCartao || !cvvCartao) {
+                    showToast('Preencha todos os dados do cartão.', 'warning');
+                    return;
+                }
+
+                if (numeroCartao.length < 13 || numeroCartao.length > 16) {
+                    showToast('Número do cartão inválido.', 'warning');
+                    return;
+                }
+
+                const bandeiraCartao = detectarBandeira(numeroCartao);
+                if (!['visa', 'mastercard'].includes(bandeiraCartao)) {
+                    showToast('Bandeira não suportada. Use cartão Visa ou Mastercard.', 'warning');
+                    return;
+                }
+
+                if (!validarLuhn(numeroCartao)) {
+                    showToast('Número do cartão inválido (falha na validação).', 'warning');
+                    return;
+                }
+
+                if (!/^([0][1-9]|1[0-2])\/(\d{2})$/.test(validadeCartao)) {
+                    showToast('Validade do cartão inválida. Use MM/AA.', 'warning');
+                    return;
+                }
+
+                const [mesValidade, anoValidade] = validadeCartao.split('/');
+                const dataAtual = new Date();
+                const anoAtual = Number(String(dataAtual.getFullYear()).slice(-2));
+                const mesAtual = dataAtual.getMonth() + 1;
+                const expirada = Number(anoValidade) < anoAtual || (Number(anoValidade) === anoAtual && Number(mesValidade) < mesAtual);
+                if (expirada) {
+                    showToast('Cartão com validade expirada.', 'warning');
+                    return;
+                }
+
+                if (!/^\d{3,4}$/.test(cvvCartao)) {
+                    showToast('Código de segurança inválido.', 'warning');
+                    return;
+                }
+
+                const finalCartao = numeroCartao.slice(-4);
+                const resumoCartao = `Pagamento em cartão (${bandeiraCartao.toUpperCase()}) - Nome: ${nomeCartao} - Final: **** ${finalCartao} - Validade: ${validadeCartao}`;
+                observacoes = observacoes ? `${observacoes}\n${resumoCartao}` : resumoCartao;
+            }
+
             const formData = new FormData();
             formData.append('valor', document.getElementById('contribuicaoValor').value);
-            formData.append('metodo_pagamento', document.getElementById('contribuicaoMetodo').value);
-            formData.append('observacoes', document.getElementById('contribuicaoObservacoes').value);
+            formData.append('metodo_pagamento', metodoPagamento);
+            formData.append('observacoes', observacoes);
             
             const comprovante = document.getElementById('contribuicaoComprovante').files[0];
             if (comprovante) {

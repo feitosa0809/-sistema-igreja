@@ -1,5 +1,5 @@
 // Service Worker para PWA
-const CACHE_NAME = 'igreja-app-v1.0.3';
+const CACHE_NAME = 'igreja-app-v1.0.4';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -11,6 +11,7 @@ const urlsToCache = [
   '/assets/js/config.js',
   '/assets/js/auth.js',
   '/assets/js/donations.js',
+  '/assets/js/modals.js',
   '/assets/js/admin.js',
   '/manifest.json'
 ];

@@ -4,8 +4,8 @@
   "description": "Sistema de gestão para igreja com pagamentos e aniversariantes",
   "main": "backend/server.js",
   "scripts": {
-    "start": "node backend/server.js",
-    "dev": "node backend/server.js",
+    "start": "node backend/scripts/start-safe.js",
+    "dev": "node backend/scripts/start-safe.js",
     "build": "echo 'Build concluído'"
   },
   "keywords": ["igreja", "pagamentos", "dizimo", "aniversariantes"],

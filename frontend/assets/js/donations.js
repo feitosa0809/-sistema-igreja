@@ -210,10 +210,16 @@ async function showOfertas() {
 async function showCampanhas() {
     try {
         const data = await apiService.call('/donations/campanhas');
+        const podeCriarCampanha = ['admin', 'pastor'].includes(currentUser?.tipo_usuario);
         
         let content = `
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2><i class="fas fa-bullhorn"></i> Campanhas Ativas</h2>
+                ${podeCriarCampanha ? `
+                    <button class="btn btn-primary" onclick="showNovaCampanhaModal()">
+                        <i class="fas fa-plus"></i> Nova Campanha
+                    </button>
+                ` : ''}
             </div>
         `;
 
@@ -223,6 +229,11 @@ async function showCampanhas() {
                     <i class="fas fa-bullhorn fa-3x text-muted mb-3"></i>
                     <h4>Nenhuma campanha ativa</h4>
                     <p class="text-muted">Não há campanhas disponíveis no momento</p>
+                    ${podeCriarCampanha ? `
+                        <button class="btn btn-outline-primary mt-2" onclick="showNovaCampanhaModal()">
+                            <i class="fas fa-plus"></i> Criar primeira campanha
+                        </button>
+                    ` : ''}
                 </div>
             `;
         } else {
@@ -251,7 +262,7 @@ async function showCampanhas() {
                                         <small class="text-success">Arrecadado: R$ ${parseFloat(campanha.total_arrecadado || 0).toFixed(2)}</small>
                                     </div>
                                 ` : ''}
-                                <button class="btn btn-primary" onclick="showContribuirModal(${campanha.id}, '${campanha.nome}')">
+                                <button class="btn btn-primary" onclick='showContribuirModal(${campanha.id}, ${JSON.stringify(campanha.nome)})'>
                                     <i class="fas fa-hand-holding-heart"></i> Contribuir
                                 </button>
                             </div>
@@ -266,6 +277,69 @@ async function showCampanhas() {
         document.getElementById('content').innerHTML = content;
     } catch (error) {
         showToast('Erro ao carregar campanhas: ' + error.message, 'danger');
+    }
+}
+
+async function showNovaCampanhaModal() {
+    try {
+        const { value: formValues } = await Swal.fire({
+            title: 'Nova Campanha',
+            html: `
+                <div class="text-start">
+                    <label class="form-label">Nome da Campanha</label>
+                    <input id="swal-campanha-nome" class="form-control mb-2" placeholder="Ex: Reforma do Templo">
+                    <label class="form-label">Descrição</label>
+                    <textarea id="swal-campanha-descricao" class="form-control mb-2" rows="2" placeholder="Descreva a campanha"></textarea>
+                    <label class="form-label">Meta (R$)</label>
+                    <input id="swal-campanha-meta" type="number" min="0" step="0.01" class="form-control mb-2" placeholder="10000">
+                    <label class="form-label">Data de Início</label>
+                    <input id="swal-campanha-inicio" type="date" class="form-control mb-2">
+                    <label class="form-label">Data de Fim</label>
+                    <input id="swal-campanha-fim" type="date" class="form-control">
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Criar campanha',
+            cancelButtonText: 'Cancelar',
+            focusConfirm: false,
+            preConfirm: () => {
+                const nome = document.getElementById('swal-campanha-nome').value.trim();
+                const descricao = document.getElementById('swal-campanha-descricao').value.trim();
+                const metaValor = parseFloat(document.getElementById('swal-campanha-meta').value || '0');
+                const dataInicio = document.getElementById('swal-campanha-inicio').value;
+                const dataFim = document.getElementById('swal-campanha-fim').value;
+
+                if (!nome || !dataInicio || !dataFim || Number.isNaN(metaValor)) {
+                    Swal.showValidationMessage('Preencha nome, meta e período da campanha.');
+                    return false;
+                }
+
+                if (new Date(dataFim) < new Date(dataInicio)) {
+                    Swal.showValidationMessage('A data fim deve ser maior ou igual à data início.');
+                    return false;
+                }
+
+                return {
+                    nome,
+                    descricao,
+                    meta_valor: metaValor,
+                    data_inicio: dataInicio,
+                    data_fim: dataFim
+                };
+            }
+        });
+
+        if (!formValues) return;
+
+        await apiService.call('/donations/campanhas', {
+            method: 'POST',
+            body: JSON.stringify(formValues)
+        });
+
+        showToast('Campanha criada com sucesso!', 'success');
+        await showCampanhas();
+    } catch (error) {
+        showToast('Erro ao criar campanha: ' + error.message, 'danger');
     }
 }
 
