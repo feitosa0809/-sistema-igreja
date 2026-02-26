@@ -19,7 +19,7 @@ class AdminDashboard {
         // Verificar se é admin/tesoureiro/pastor
         if (!['admin', 'tesoureiro', 'pastor'].includes(this.user.tipo_usuario)) {
             console.log('Usuário sem permissão, redirecionando...');
-            alert('Acesso negado! Apenas administradores podem acessar esta área.');
+            alert('Acesso negado! Apenas admin, tesoureiro ou pastor podem acessar esta área.');
             window.location.href = 'index.html';
             return;
         }
