@@ -1,395 +1,312 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../config/database-sqlite');
-const { authMiddleware } = require('../middleware/auth');
+const pool = require('../config/database-sqlite');
+const { authMiddleware, requireRole } = require('../middleware/auth');
 
-// Aplicar middleware de autenticação em todas as rotas
+function obterPeriodo(req) {
+  const periodo = String(req.query.periodo || '').trim();
+  if (/^\d{4}-(0[1-9]|1[0-2])$/.test(periodo)) {
+    return periodo;
+  }
+
+  const hoje = new Date();
+  const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+  return `${hoje.getFullYear()}-${mes}`;
+}
+
+function obterAno(req) {
+  const ano = String(req.query.ano || '').trim();
+  if (/^\d{4}$/.test(ano)) {
+    return ano;
+  }
+  return String(new Date().getFullYear());
+}
+
 router.use(authMiddleware);
+router.use(requireRole(['admin', 'tesoureiro', 'pastor']));
 
-// GET /api/dashboard/resumo-financeiro
-// Retorna resumo financeiro unificado focado em dízimos e ofertas
 router.get('/resumo-financeiro', async (req, res) => {
   try {
-    const hoje = new Date();
-    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-    const ano = hoje.getFullYear();
-    const mesAnoAtual = `${ano}-${mes}`;
+    const periodo = obterPeriodo(req);
 
-    // Total de dízimos e ofertas do mês
-    const totalArrecadado = await new Promise((resolve, reject) => {
-      db.get(`
-        SELECT 
-          SUM(CASE WHEN tipo = 'dizimo' THEN valor ELSE 0 END) as total_dizimos,
-          SUM(CASE WHEN tipo = 'oferta' THEN valor ELSE 0 END) as total_ofertas,
-          COUNT(CASE WHEN tipo = 'dizimo' THEN 1 END) as qtd_dizimos,
-          COUNT(CASE WHEN tipo = 'oferta' THEN 1 END) as qtd_ofertas
-        FROM donations
-        WHERE strftime('%Y-%m', data_pagamento) = ?
-      `, [mesAnoAtual], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
+    const [dizimosRows] = await pool.execute(`
+      SELECT
+        COALESCE(SUM(valor), 0) AS total,
+        COUNT(*) AS quantidade,
+        SUM(CASE WHEN status = 'pendente' THEN 1 ELSE 0 END) AS pendentes
+      FROM dizimos
+      WHERE strftime('%Y-%m', data_pagamento) = ?
+    `, [periodo]);
 
-    // Destinação dos dízimos (onde o dinheiro foi usado)
-    const destinacao = await new Promise((resolve, reject) => {
-      db.get(`
-        SELECT 
-          COUNT(*) as total_registros,
-          SUM(CASE WHEN status = 'pago' THEN valor ELSE 0 END) as total_pago,
-          SUM(CASE WHEN status = 'pendente' THEN valor ELSE 0 END) as total_pendente
-        FROM despesas
-        WHERE strftime('%Y-%m', data_despesa) = ?
-      `, [mesAnoAtual], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
+    const [ofertasRows] = await pool.execute(`
+      SELECT
+        COALESCE(SUM(valor), 0) AS total,
+        COUNT(*) AS quantidade
+      FROM ofertas
+      WHERE strftime('%Y-%m', data_oferta) = ?
+    `, [periodo]);
 
-    // Campanhas ativas
-    const campanhas = await new Promise((resolve, reject) => {
-      db.all(`
-        SELECT 
-          COUNT(*) as total_ativas,
-          SUM(valor_meta) as total_meta,
-          SUM(valor_atual) as total_arrecadado
-        FROM metas
-        WHERE status = 'ativa'
+    const [membrosRows] = await pool.execute(`
+      SELECT COUNT(*) AS total
+      FROM usuarios
+      WHERE status = 'ativo'
+    `);
+
+    const [campanhasRows] = await pool.execute(`
+      SELECT COUNT(*) AS total
+      FROM metas
+      WHERE status = 'ativa'
         AND date(data_fim) >= date('now')
-      `, [], (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows[0] || {});
-      });
-    });
+    `);
 
-    // Metas de arrecadação do ano
-    const metasAno = await new Promise((resolve, reject) => {
-      db.get(`
-        SELECT 
-          SUM(total_receita) as meta_anual,
-          SUM(total_despesa) as despesa_prevista
-        FROM orcamentos
-        WHERE ano = ? AND status = 'ativo'
-      `, [ano], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
-
-    // Membros dizimistas ativos (contribuíram nos últimos 3 meses)
-    const membrosAtivos = await new Promise((resolve, reject) => {
-      db.get(`
-        SELECT COUNT(DISTINCT membro_id) as total
-        FROM donations
-        WHERE tipo = 'dizimo'
-        AND data_pagamento >= date('now', '-3 months')
-      `, [], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
-
-    const totalDizimos = parseFloat(totalArrecadado?.total_dizimos || 0);
-    const totalOfertas = parseFloat(totalArrecadado?.total_ofertas || 0);
-    const totalMes = totalDizimos + totalOfertas;
+    const dizimos = parseFloat(dizimosRows[0]?.total || 0);
+    const ofertas = parseFloat(ofertasRows[0]?.total || 0);
 
     res.json({
-      periodo: {
-        mes: mesAnoAtual,
-        ano: ano
+      dizimos: {
+        total: dizimos,
+        quantidade: Number(dizimosRows[0]?.quantidade || 0)
       },
-      arrecadacao: {
-        dizimos: {
-          total: totalDizimos.toFixed(2),
-          quantidade: totalArrecadado?.qtd_dizimos || 0
-        },
-        ofertas: {
-          total: totalOfertas.toFixed(2),
-          quantidade: totalArrecadado?.qtd_ofertas || 0
-        },
-        total_mes: totalMes.toFixed(2)
+      ofertas: {
+        total: ofertas,
+        quantidade: Number(ofertasRows[0]?.quantidade || 0)
       },
-      destinacao: {
-        total_pago: parseFloat(destinacao?.total_pago || 0).toFixed(2),
-        total_pendente: parseFloat(destinacao?.total_pendente || 0).toFixed(2),
-        registros: destinacao?.total_registros || 0
+      totalMes: dizimos + ofertas,
+      pendentes: {
+        quantidade: Number(dizimosRows[0]?.pendentes || 0)
       },
-      campanhas: {
-        ativas: campanhas?.total_ativas || 0,
-        meta_total: parseFloat(campanhas?.total_meta || 0).toFixed(2),
-        arrecadado: parseFloat(campanhas?.total_arrecadado || 0).toFixed(2),
-        percentual: campanhas?.total_meta > 0 
-          ? ((campanhas.total_arrecadado / campanhas.total_meta) * 100).toFixed(1)
-          : 0
-      },
-      metas_anuais: {
-        meta_receita: parseFloat(metasAno?.meta_anual || 0).toFixed(2),
-        despesa_prevista: parseFloat(metasAno?.despesa_prevista || 0).toFixed(2)
-      },
-      membros_dizimistas: membrosAtivos?.total || 0,
-      transparencia: {
-        saldo_mes: (totalMes - parseFloat(destinacao?.total_pago || 0)).toFixed(2)
-      }
+      membros: Number(membrosRows[0]?.total || 0),
+      campanhas: Number(campanhasRows[0]?.total || 0),
+      periodo
     });
-
   } catch (error) {
     console.error('Erro ao buscar resumo financeiro:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Erro ao buscar resumo financeiro',
-      detalhes: error.message 
+      detalhes: error.message
     });
   }
 });
 
-// GET /api/dashboard/evolucao-mensal
-// Retorna evolução financeira dos últimos 6 meses
 router.get('/evolucao-mensal', async (req, res) => {
   try {
-    const meses = [];
-    
-    // Gerar últimos 6 meses
-    for (let i = 5; i >= 0; i--) {
-      const data = new Date();
-      data.setMonth(data.getMonth() - i);
-      const mes = String(data.getMonth() + 1).padStart(2, '0');
-      const ano = data.getFullYear();
-      meses.push(`${ano}-${mes}`);
-    }
+    const periodo = obterPeriodo(req);
 
-    const evolucao = [];
+    const [rows] = await pool.execute(`
+      WITH RECURSIVE ultimos_meses(offset) AS (
+        SELECT 5
+        UNION ALL
+        SELECT offset - 1 FROM ultimos_meses WHERE offset > 0
+      ),
+      meses AS (
+        SELECT strftime('%Y-%m', date(? || '-01', '-' || offset || ' months')) AS mes
+        FROM ultimos_meses
+      ),
+      dizimos AS (
+        SELECT strftime('%Y-%m', data_pagamento) AS mes, COALESCE(SUM(valor), 0) AS total
+        FROM dizimos
+        WHERE strftime('%Y-%m', data_pagamento) IN (SELECT mes FROM meses)
+        GROUP BY strftime('%Y-%m', data_pagamento)
+      ),
+      ofertas AS (
+        SELECT strftime('%Y-%m', data_oferta) AS mes, COALESCE(SUM(valor), 0) AS total
+        FROM ofertas
+        WHERE strftime('%Y-%m', data_oferta) IN (SELECT mes FROM meses)
+        GROUP BY strftime('%Y-%m', data_oferta)
+      )
+      SELECT
+        m.mes,
+        COALESCE(d.total, 0) AS dizimos,
+        COALESCE(o.total, 0) AS ofertas,
+        COALESCE(d.total, 0) + COALESCE(o.total, 0) AS total
+      FROM meses m
+      LEFT JOIN dizimos d ON d.mes = m.mes
+      LEFT JOIN ofertas o ON o.mes = m.mes
+      ORDER BY m.mes ASC
+    `, [periodo]);
 
-    for (const mesAno of meses) {
-      // Dízimos do mês
-      const dizimos = await db.all(`
-        SELECT SUM(valor) as total
-        FROM dizimos 
-        WHERE strftime('%Y-%m', data_pagamento) = ?
-        AND status = 'confirmado'
-      `, [mesAno]);
-
-      // Ofertas do mês
-      const ofertas = await db.all(`
-        SELECT SUM(valor) as total
-        FROM ofertas 
-        WHERE strftime('%Y-%m', data) = ?
-      `, [mesAno]);
-
-      const totalDizimos = parseFloat(dizimos[0]?.total || 0);
-      const totalOfertas = parseFloat(ofertas[0]?.total || 0);
-
-      evolucao.push({
-        mes: mesAno,
-        dizimos: totalDizimos.toFixed(2),
-        ofertas: totalOfertas.toFixed(2),
-        total: (totalDizimos + totalOfertas).toFixed(2)
-      });
-    }
-
-    res.json(evolucao);
-
+    res.json(rows.map((item) => ({
+      mes: item.mes,
+      dizimos: Number(item.dizimos || 0),
+      ofertas: Number(item.ofertas || 0),
+      total: Number(item.total || 0)
+    })));
   } catch (error) {
     console.error('Erro ao buscar evolução mensal:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Erro ao buscar evolução mensal',
-      detalhes: error.message 
+      detalhes: error.message
     });
   }
 });
 
-// GET /api/dashboard/campanhas-progresso
-// Retorna progresso das campanhas ativas
 router.get('/campanhas-progresso', async (req, res) => {
   try {
-    const db = require('../config/database-sqlite');
-
-    const campanhas = await db.all(`
-      SELECT 
-        c.id,
-        c.nome,
-        c.descricao,
-        c.meta,
-        c.data_inicio,
-        c.data_fim,
-        COALESCE(SUM(o.valor), 0) as arrecadado
-      FROM campanhas c
-      LEFT JOIN ofertas o ON o.campanha_id = c.id
-      WHERE c.status = 'ativa'
-      AND c.data_fim >= date('now')
-      GROUP BY c.id
-      ORDER BY c.data_fim ASC
+    const [rows] = await pool.execute(`
+      SELECT
+        id,
+        titulo,
+        descricao,
+        valor_meta,
+        valor_atual,
+        data_inicio,
+        data_fim,
+        status
+      FROM metas
+      WHERE status = 'ativa'
+        AND date(data_fim) >= date('now')
+      ORDER BY date(data_fim) ASC
       LIMIT 5
     `);
 
-    const resultado = campanhas.map(campanha => {
-      const meta = parseFloat(campanha.meta || 0);
-      const arrecadado = parseFloat(campanha.arrecadado || 0);
-      const percentual = meta > 0 ? (arrecadado / meta * 100).toFixed(1) : 0;
+    const resultado = rows.map((campanha) => {
+      const meta = parseFloat(campanha.valor_meta || 0);
+      const arrecadado = parseFloat(campanha.valor_atual || 0);
+      const percentual = meta > 0 ? (arrecadado / meta) * 100 : 0;
 
       return {
         id: campanha.id,
-        nome: campanha.nome,
+        nome: campanha.titulo,
         descricao: campanha.descricao,
-        meta: meta.toFixed(2),
-        arrecadado: arrecadado.toFixed(2),
-        percentual: parseFloat(percentual),
+        meta,
+        arrecadado,
+        percentual: Number(percentual.toFixed(1)),
         dataInicio: campanha.data_inicio,
-        dataFim: campanha.data_fim
+        dataFim: campanha.data_fim,
+        status: campanha.status
       };
     });
 
     res.json(resultado);
-
   } catch (error) {
     console.error('Erro ao buscar progresso de campanhas:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Erro ao buscar progresso de campanhas',
-      detalhes: error.message 
+      detalhes: error.message
     });
   }
 });
 
-// GET /api/dashboard/top-dizimistas
-// Retorna os 10 maiores dizimistas do ano
 router.get('/top-dizimistas', async (req, res) => {
   try {
-    const db = require('../config/database-sqlite');
-    const anoAtual = new Date().getFullYear();
+    const ano = obterAno(req);
 
-    const dizimistas = await db.all(`
-      SELECT 
+    const [rows] = await pool.execute(`
+      SELECT
         u.id,
         u.nome,
         u.foto_perfil,
-        COUNT(d.id) as quantidade,
-        SUM(d.valor) as total
+        COUNT(d.id) AS quantidade,
+        COALESCE(SUM(d.valor), 0) AS total
       FROM usuarios u
       INNER JOIN dizimos d ON d.usuario_id = u.id
       WHERE strftime('%Y', d.data_pagamento) = ?
-      AND d.status = 'confirmado'
-      GROUP BY u.id
+      GROUP BY u.id, u.nome, u.foto_perfil
       ORDER BY total DESC
       LIMIT 10
-    `, [String(anoAtual)]);
+    `, [ano]);
 
-    const resultado = dizimistas.map(diz => ({
-      id: diz.id,
-      nome: diz.nome,
-      fotoPerfil: diz.foto_perfil,
-      quantidade: diz.quantidade,
-      total: parseFloat(diz.total || 0).toFixed(2)
-    }));
-
-    res.json(resultado);
-
+    res.json(rows.map((item) => ({
+      id: item.id,
+      nome: item.nome,
+      fotoPerfil: item.foto_perfil,
+      quantidade: Number(item.quantidade || 0),
+      total: Number(item.total || 0)
+    })));
   } catch (error) {
     console.error('Erro ao buscar top dizimistas:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Erro ao buscar top dizimistas',
-      detalhes: error.message 
+      detalhes: error.message
     });
   }
 });
 
-// GET /api/dashboard/distribuicao-tipos
-// Retorna distribuição de receitas por tipo
 router.get('/distribuicao-tipos', async (req, res) => {
   try {
-    const db = require('../config/database-sqlite');
-    const hoje = new Date();
-    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-    const ano = hoje.getFullYear();
-    const mesAnoAtual = `${ano}-${mes}`;
+    const periodo = obterPeriodo(req);
 
-    // Total de dízimos
-    const dizimos = await db.all(`
-      SELECT SUM(valor) as total
-      FROM dizimos 
+    const [dizimosRows] = await pool.execute(`
+      SELECT COALESCE(SUM(valor), 0) AS total
+      FROM dizimos
       WHERE strftime('%Y-%m', data_pagamento) = ?
-      AND status = 'confirmado'
-    `, [mesAnoAtual]);
+    `, [periodo]);
 
-    // Ofertas por tipo
-    const ofertas = await db.all(`
-      SELECT 
-        tipo,
-        SUM(valor) as total
-      FROM ofertas 
-      WHERE strftime('%Y-%m', data) = ?
-      GROUP BY tipo
-    `, [mesAnoAtual]);
+    const [ofertasRows] = await pool.execute(`
+      SELECT
+        COALESCE(tipo_oferta, 'oferta') AS tipo,
+        COALESCE(SUM(valor), 0) AS total
+      FROM ofertas
+      WHERE strftime('%Y-%m', data_oferta) = ?
+      GROUP BY COALESCE(tipo_oferta, 'oferta')
+    `, [periodo]);
 
-    const totalDizimos = parseFloat(dizimos[0]?.total || 0);
-    
+    const cores = {
+      dizimo: '#667eea',
+      oferta: '#764ba2',
+      campanha: '#f093fb',
+      missoes: '#4facfe',
+      construcao: '#43e97b',
+      outros: '#fa709a'
+    };
+
     const distribuicao = [
       {
         tipo: 'Dízimos',
-        total: totalDizimos.toFixed(2),
-        cor: '#667eea'
+        total: Number(dizimosRows[0]?.total || 0),
+        cor: cores.dizimo
       }
     ];
 
-    // Adicionar ofertas por tipo
-    ofertas.forEach(oferta => {
-      const cores = {
-        'oferta': '#764ba2',
-        'campanha': '#f093fb',
-        'missoes': '#4facfe',
-        'construcao': '#43e97b',
-        'outros': '#fa709a'
-      };
-
+    ofertasRows.forEach((item) => {
+      const tipoOriginal = String(item.tipo || 'oferta').toLowerCase();
+      const tipoFormatado = tipoOriginal.charAt(0).toUpperCase() + tipoOriginal.slice(1);
       distribuicao.push({
-        tipo: oferta.tipo.charAt(0).toUpperCase() + oferta.tipo.slice(1),
-        total: parseFloat(oferta.total || 0).toFixed(2),
-        cor: cores[oferta.tipo] || '#95a5a6'
+        tipo: tipoFormatado,
+        total: Number(item.total || 0),
+        cor: cores[tipoOriginal] || '#95a5a6'
       });
     });
 
     res.json(distribuicao);
-
   } catch (error) {
     console.error('Erro ao buscar distribuição por tipos:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Erro ao buscar distribuição por tipos',
-      detalhes: error.message 
+      detalhes: error.message
     });
   }
 });
 
-// GET /api/dashboard/aniversariantes-mes
-// Retorna aniversariantes do mês atual
 router.get('/aniversariantes-mes', async (req, res) => {
   try {
-    const db = require('../config/database-sqlite');
-    const mesAtual = String(new Date().getMonth() + 1).padStart(2, '0');
+    const periodo = obterPeriodo(req);
+    const [, mes] = periodo.split('-');
 
-    const aniversariantes = await db.all(`
-      SELECT 
+    const [rows] = await pool.execute(`
+      SELECT
         id,
         nome,
         foto_perfil,
         data_nascimento
       FROM usuarios
       WHERE strftime('%m', data_nascimento) = ?
-      AND status = 'ativo'
+        AND status = 'ativo'
       ORDER BY strftime('%d', data_nascimento) ASC
       LIMIT 10
-    `, [mesAtual]);
+    `, [mes]);
 
-    const resultado = aniversariantes.map(pessoa => ({
-      id: pessoa.id,
-      nome: pessoa.nome,
-      fotoPerfil: pessoa.foto_perfil,
-      dataNascimento: pessoa.data_nascimento
-    }));
-
-    res.json(resultado);
-
+    res.json(rows.map((item) => ({
+      id: item.id,
+      nome: item.nome,
+      fotoPerfil: item.foto_perfil,
+      dataNascimento: item.data_nascimento
+    })));
   } catch (error) {
     console.error('Erro ao buscar aniversariantes do mês:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Erro ao buscar aniversariantes do mês',
-      detalhes: error.message 
+      detalhes: error.message
     });
   }
 });

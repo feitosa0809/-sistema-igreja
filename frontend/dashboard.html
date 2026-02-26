@@ -215,9 +215,18 @@
                     <h1><i class="fas fa-chart-line"></i> Dashboard Financeiro</h1>
                     <p>Visão geral das finanças da igreja</p>
                 </div>
-                <button class="btn btn-back" onclick="window.location.href='admin.html'">
-                    <i class="fas fa-arrow-left"></i> Voltar
-                </button>
+                <div class="d-flex gap-2 align-items-center flex-wrap justify-content-end">
+                    <div>
+                        <label for="filtro-periodo" class="form-label mb-1 small text-muted">Período</label>
+                        <input type="month" class="form-control" id="filtro-periodo">
+                    </div>
+                    <button class="btn btn-primary" onclick="aplicarFiltroPeriodo()" style="margin-top: 20px;">
+                        <i class="fas fa-filter"></i> Aplicar
+                    </button>
+                    <button class="btn btn-back" onclick="window.location.href='admin.html'" style="margin-top: 20px;">
+                        <i class="fas fa-arrow-left"></i> Voltar
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -311,7 +320,7 @@
             <!-- Top Dizimistas -->
             <div class="col-lg-6">
                 <div class="chart-card">
-                    <h4><i class="fas fa-trophy"></i> Top 10 Dizimistas do Ano</h4>
+                    <h4 id="titulo-top-dizimistas"><i class="fas fa-trophy"></i> Top 10 Dizimistas do Ano</h4>
                     <div id="dizimistas-container"></div>
                 </div>
             </div>
@@ -321,7 +330,7 @@
         <div class="row">
             <div class="col-12">
                 <div class="chart-card">
-                    <h4><i class="fas fa-birthday-cake"></i> Aniversariantes do Mês</h4>
+                    <h4 id="titulo-aniversariantes"><i class="fas fa-birthday-cake"></i> Aniversariantes do Mês</h4>
                     <div id="aniversariantes-container"></div>
                 </div>
             </div>
@@ -329,30 +338,86 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:3000/api';
+        const API_URL = `${window.location.origin}/api`;
         let chartEvolucao, chartDistribuicao;
+        let periodoSelecionado = '';
+
+        function obterPeriodoAtual() {
+            const hoje = new Date();
+            const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+            return `${hoje.getFullYear()}-${mes}`;
+        }
+
+        function montarQueryPeriodo() {
+            return `periodo=${encodeURIComponent(periodoSelecionado)}`;
+        }
+
+        function obterToken() {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                window.location.href = 'index.html';
+                throw new Error('Usuário não autenticado');
+            }
+            return token;
+        }
+
+        async function apiGet(endpoint) {
+            const token = obterToken();
+            const response = await fetch(`${API_URL}${endpoint}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                localStorage.removeItem('authToken');
+                window.location.href = 'index.html';
+                throw new Error('Sessão expirada');
+            }
+
+            if (!response.ok) {
+                throw new Error('Erro ao carregar dados');
+            }
+
+            return response.json();
+        }
 
         // Carregar dados ao iniciar
         document.addEventListener('DOMContentLoaded', () => {
+            try {
+                obterToken();
+            } catch (error) {
+                return;
+            }
+
+            const inputPeriodo = document.getElementById('filtro-periodo');
+            periodoSelecionado = obterPeriodoAtual();
+            inputPeriodo.value = periodoSelecionado;
+
+            carregarDashboardCompleto();
+        });
+
+        function aplicarFiltroPeriodo() {
+            const inputPeriodo = document.getElementById('filtro-periodo');
+            periodoSelecionado = inputPeriodo.value || obterPeriodoAtual();
+            carregarDashboardCompleto();
+        }
+
+        function carregarDashboardCompleto() {
+            const ano = periodoSelecionado.split('-')[0];
+            document.getElementById('titulo-top-dizimistas').innerHTML = `<i class="fas fa-trophy"></i> Top 10 Dizimistas de ${ano}`;
+            document.getElementById('titulo-aniversariantes').innerHTML = `<i class="fas fa-birthday-cake"></i> Aniversariantes de ${periodoSelecionado}`;
+
             carregarResumoFinanceiro();
             carregarEvolucaoMensal();
             carregarDistribuicaoTipos();
             carregarCampanhasProgresso();
             carregarTopDizimistas();
             carregarAniversariantes();
-        });
+        }
 
         // Carregar resumo financeiro
         async function carregarResumoFinanceiro() {
             try {
-                const token = localStorage.getItem('authToken');
-                const response = await fetch(`${API_URL}/dashboard/resumo-financeiro`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (!response.ok) throw new Error('Erro ao carregar resumo');
-
-                const data = await response.json();
+                const data = await apiGet(`/dashboard/resumo-financeiro?${montarQueryPeriodo()}`);
 
                 document.getElementById('stat-dizimos').textContent = `R$ ${parseFloat(data.dizimos.total).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                 document.getElementById('stat-ofertas').textContent = `R$ ${parseFloat(data.ofertas.total).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
@@ -369,14 +434,7 @@
         // Carregar evolução mensal
         async function carregarEvolucaoMensal() {
             try {
-                const token = localStorage.getItem('authToken');
-                const response = await fetch(`${API_URL}/dashboard/evolucao-mensal`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (!response.ok) throw new Error('Erro ao carregar evolução');
-
-                const data = await response.json();
+                const data = await apiGet(`/dashboard/evolucao-mensal?${montarQueryPeriodo()}`);
 
                 const labels = data.map(item => {
                     const [ano, mes] = item.mes.split('-');
@@ -385,6 +443,9 @@
                 });
 
                 const ctx = document.getElementById('chartEvolucao').getContext('2d');
+                if (chartEvolucao) {
+                    chartEvolucao.destroy();
+                }
                 chartEvolucao = new Chart(ctx, {
                     type: 'line',
                     data: {
@@ -445,16 +506,12 @@
         // Carregar distribuição por tipos
         async function carregarDistribuicaoTipos() {
             try {
-                const token = localStorage.getItem('authToken');
-                const response = await fetch(`${API_URL}/dashboard/distribuicao-tipos`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (!response.ok) throw new Error('Erro ao carregar distribuição');
-
-                const data = await response.json();
+                const data = await apiGet(`/dashboard/distribuicao-tipos?${montarQueryPeriodo()}`);
 
                 const ctx = document.getElementById('chartDistribuicao').getContext('2d');
+                if (chartDistribuicao) {
+                    chartDistribuicao.destroy();
+                }
                 chartDistribuicao = new Chart(ctx, {
                     type: 'doughnut',
                     data: {
@@ -494,14 +551,7 @@
         // Carregar campanhas em progresso
         async function carregarCampanhasProgresso() {
             try {
-                const token = localStorage.getItem('authToken');
-                const response = await fetch(`${API_URL}/dashboard/campanhas-progresso`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (!response.ok) throw new Error('Erro ao carregar campanhas');
-
-                const data = await response.json();
+                const data = await apiGet('/dashboard/campanhas-progresso');
                 const container = document.getElementById('campanhas-container');
 
                 if (data.length === 0) {
@@ -541,14 +591,8 @@
         // Carregar top dizimistas
         async function carregarTopDizimistas() {
             try {
-                const token = localStorage.getItem('authToken');
-                const response = await fetch(`${API_URL}/dashboard/top-dizimistas`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (!response.ok) throw new Error('Erro ao carregar dizimistas');
-
-                const data = await response.json();
+                const ano = periodoSelecionado.split('-')[0];
+                const data = await apiGet(`/dashboard/top-dizimistas?ano=${encodeURIComponent(ano)}`);
                 const container = document.getElementById('dizimistas-container');
 
                 if (data.length === 0) {
@@ -577,14 +621,7 @@
         // Carregar aniversariantes
         async function carregarAniversariantes() {
             try {
-                const token = localStorage.getItem('authToken');
-                const response = await fetch(`${API_URL}/dashboard/aniversariantes-mes`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (!response.ok) throw new Error('Erro ao carregar aniversariantes');
-
-                const data = await response.json();
+                const data = await apiGet(`/dashboard/aniversariantes-mes?${montarQueryPeriodo()}`);
                 const container = document.getElementById('aniversariantes-container');
 
                 if (data.length === 0) {
