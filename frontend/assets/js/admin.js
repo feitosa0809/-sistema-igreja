@@ -8,10 +8,37 @@ class AdminDashboard {
         this.init();
     }
 
+    async carregarUsuarioAtual() {
+        const response = await fetch(`${API_URL}/users/profile`, {
+            headers: {
+                'Authorization': `Bearer ${this.token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Sessão inválida');
+        }
+
+        const data = await response.json();
+        this.user = data.user || {};
+        localStorage.setItem('user', JSON.stringify(this.user));
+    }
+
     async init() {
         // Verificar autenticação
         if (!this.token) {
             console.log('Token não encontrado, redirecionando...');
+            window.location.href = 'index.html';
+            return;
+        }
+
+        try {
+            await this.carregarUsuarioAtual();
+        } catch (error) {
+            console.log('Falha ao validar sessão, redirecionando...');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('user');
             window.location.href = 'index.html';
             return;
         }
