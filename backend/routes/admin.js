@@ -100,11 +100,45 @@ router.put('/dizimos/:id/rejeitar', requireRole(['admin', 'tesoureiro']), async 
   }
 });
 
+// Listar campanhas (metas)
+router.get('/campanhas', async (req, res) => {
+  try {
+    const [rows] = await pool.execute(`
+      SELECT
+        m.id,
+        m.titulo,
+        m.descricao,
+        m.tipo,
+        m.categoria,
+        m.valor_meta,
+        m.valor_atual,
+        m.data_inicio,
+        m.data_fim,
+        m.status,
+        u.nome AS criado_por_nome,
+        CASE
+          WHEN m.valor_meta > 0 THEN ROUND((m.valor_atual * 100.0 / m.valor_meta), 2)
+          ELSE 0
+        END AS percentual_atingido
+      FROM metas m
+      LEFT JOIN usuarios u ON u.id = m.criado_por
+      ORDER BY m.created_at DESC
+    `);
+
+    res.json({ campanhas: rows });
+  } catch (error) {
+    console.error('Error fetching campanhas:', error);
+    res.status(500).json({ error: 'Erro ao buscar campanhas' });
+  }
+});
+
 // Criar nova campanha
 router.post('/campanhas', requireRole(['admin', 'pastor']), [
-  body('nome').notEmpty().withMessage('Nome da campanha é obrigatório'),
+  body('titulo').notEmpty().withMessage('Título da campanha é obrigatório'),
+  body('tipo').notEmpty().withMessage('Tipo da campanha é obrigatório'),
   body('data_inicio').isDate().withMessage('Data de início inválida'),
-  body('meta_valor').optional().isFloat({ min: 0 }).withMessage('Meta deve ser um valor positivo')
+  body('data_fim').isDate().withMessage('Data de fim inválida'),
+  body('valor_meta').isFloat({ min: 0 }).withMessage('Meta deve ser um valor positivo')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -112,11 +146,14 @@ router.post('/campanhas', requireRole(['admin', 'pastor']), [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { nome, descricao, meta_valor, data_inicio, data_fim } = req.body;
+    const { titulo, descricao, tipo, categoria, valor_meta, data_inicio, data_fim } = req.body;
 
     const [result] = await pool.execute(
-      'INSERT INTO campanhas (nome, descricao, meta_valor, data_inicio, data_fim, criado_por) VALUES (?, ?, ?, ?, ?, ?)',
-      [nome, descricao, meta_valor, data_inicio, data_fim, req.user.id]
+      `INSERT INTO metas (
+        titulo, descricao, tipo, valor_meta, valor_atual,
+        data_inicio, data_fim, status, categoria, criado_por
+      ) VALUES (?, ?, ?, ?, 0, ?, ?, 'ativa', ?, ?)`,
+      [titulo, descricao || '', tipo, valor_meta, data_inicio, data_fim, categoria || null, req.user.id]
     );
 
     res.status(201).json({

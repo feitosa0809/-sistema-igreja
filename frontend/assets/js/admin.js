@@ -1,5 +1,5 @@
 // Administração da Igreja - JavaScript Simplificado
-const API_URL = 'http://localhost:3000/api';
+const API_URL = `${window.location.origin}/api`;
 
 class AdminDashboard {
     constructor() {
@@ -29,6 +29,7 @@ class AdminDashboard {
         // Inicializar dashboard
         try {
             await this.carregarRelatorioCompleto();
+            await this.carregarCampanhas();
             this.setLastAccess();
             this.initCharts();
         } catch (error) {
@@ -256,6 +257,91 @@ class AdminDashboard {
             });
         }
     }
+
+    async carregarCampanhas() {
+        const container = document.getElementById('campaignsContainer');
+        if (!container) return;
+
+        try {
+            const response = await fetch(`${API_URL}/admin/campanhas`, {
+                headers: {
+                    'Authorization': `Bearer ${this.token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                container.innerHTML = '<div class="col-12"><div class="alert alert-warning">Não foi possível carregar campanhas.</div></div>';
+                return;
+            }
+
+            const data = await response.json();
+            const campanhas = data.campanhas || [];
+
+            if (campanhas.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body text-center py-5">
+                                <i class="fas fa-bullhorn fa-3x text-muted mb-3"></i>
+                                <h4>Nenhuma campanha ativa</h4>
+                                <p class="text-muted mb-0">Não há campanhas disponíveis no momento</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = campanhas.map(campanha => {
+                const percentual = Math.max(0, Math.min(100, Number(campanha.percentual_atingido || 0)));
+                return `
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="card-title mb-0">${campanha.titulo}</h5>
+                                    <span class="badge bg-${campanha.status === 'ativa' ? 'success' : 'secondary'}">${campanha.status}</span>
+                                </div>
+                                <p class="text-muted mb-2">${campanha.descricao || 'Sem descrição'}</p>
+                                <div class="small text-muted mb-1">Tipo: ${campanha.tipo || '-'}</div>
+                                <div class="small text-muted mb-2">Período: ${this.formatDate(campanha.data_inicio)} até ${this.formatDate(campanha.data_fim)}</div>
+                                <div class="progress mb-2" style="height: 10px;">
+                                    <div class="progress-bar" role="progressbar" style="width: ${percentual}%" aria-valuenow="${percentual}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <small>Meta: ${this.formatCurrency(campanha.valor_meta)}</small>
+                                    <small>Atual: ${this.formatCurrency(campanha.valor_atual)}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } catch (error) {
+            console.error('Erro ao carregar campanhas:', error);
+            container.innerHTML = '<div class="col-12"><div class="alert alert-danger">Erro ao carregar campanhas.</div></div>';
+        }
+    }
+
+    async criarCampanha(payload) {
+        const response = await fetch(`${API_URL}/admin/campanhas`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${this.token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            const msg = data?.errors?.[0]?.msg || data?.error || 'Erro ao criar campanha';
+            throw new Error(msg);
+        }
+
+        return data;
+    }
 }
 
 // Funções globais para serem chamadas pelos elementos HTML
@@ -273,6 +359,10 @@ function showSection(sectionId) {
     // Mostrar seção selecionada
     const section = document.getElementById(sectionId);
     if (section) section.classList.add('active');
+
+    if (sectionId === 'campanhas' && adminDashboard) {
+        adminDashboard.carregarCampanhas();
+    }
     
     // Adicionar classe active ao item clicado
     event.target.closest('.sidebar-item')?.classList.add('active');
@@ -313,7 +403,78 @@ function showAddUserModal() {
 }
 
 function showAddCampaignModal() {
-    alert('Modal de adicionar campanha em desenvolvimento.');
+    if (!adminDashboard) return;
+
+    Swal.fire({
+        title: 'Nova Campanha',
+        html: `
+            <div class="text-start">
+                <label class="form-label">Título</label>
+                <input id="campanha-titulo" class="form-control mb-2" placeholder="Ex: Reforma do Templo">
+                <label class="form-label">Descrição</label>
+                <textarea id="campanha-descricao" class="form-control mb-2" rows="2" placeholder="Detalhes da campanha"></textarea>
+                <label class="form-label">Tipo</label>
+                <input id="campanha-tipo" class="form-control mb-2" placeholder="Ex: construcao">
+                <label class="form-label">Categoria (opcional)</label>
+                <input id="campanha-categoria" class="form-control mb-2" placeholder="Ex: infraestrutura">
+                <label class="form-label">Meta (R$)</label>
+                <input id="campanha-meta" type="number" step="0.01" min="0" class="form-control mb-2" placeholder="10000">
+                <label class="form-label">Data de Início</label>
+                <input id="campanha-inicio" type="date" class="form-control mb-2">
+                <label class="form-label">Data de Fim</label>
+                <input id="campanha-fim" type="date" class="form-control">
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Criar Campanha',
+        cancelButtonText: 'Cancelar',
+        focusConfirm: false,
+        preConfirm: async () => {
+            const titulo = document.getElementById('campanha-titulo').value.trim();
+            const descricao = document.getElementById('campanha-descricao').value.trim();
+            const tipo = document.getElementById('campanha-tipo').value.trim();
+            const categoria = document.getElementById('campanha-categoria').value.trim();
+            const valorMeta = parseFloat(document.getElementById('campanha-meta').value || '0');
+            const dataInicio = document.getElementById('campanha-inicio').value;
+            const dataFim = document.getElementById('campanha-fim').value;
+
+            if (!titulo || !tipo || !dataInicio || !dataFim || Number.isNaN(valorMeta)) {
+                Swal.showValidationMessage('Preencha título, tipo, meta e período da campanha.');
+                return false;
+            }
+
+            if (new Date(dataFim) < new Date(dataInicio)) {
+                Swal.showValidationMessage('A data de fim deve ser maior ou igual à data de início.');
+                return false;
+            }
+
+            try {
+                await adminDashboard.criarCampanha({
+                    titulo,
+                    descricao,
+                    tipo,
+                    categoria,
+                    valor_meta: valorMeta,
+                    data_inicio: dataInicio,
+                    data_fim: dataFim
+                });
+                return true;
+            } catch (error) {
+                Swal.showValidationMessage(error.message);
+                return false;
+            }
+        }
+    }).then(async (result) => {
+        if (!result.isConfirmed) return;
+
+        await adminDashboard.carregarCampanhas();
+        Swal.fire({
+            icon: 'success',
+            title: 'Campanha criada!',
+            timer: 1500,
+            showConfirmButton: false
+        });
+    });
 }
 
 function logout() {
