@@ -38,7 +38,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../frontend')));
 app.use('/uploads', express.static('public/uploads'));
 
-console.log('🌐 Registrando rotas...');
+console.log(' Registrando rotas...');
 // Rotas da API
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -90,17 +90,17 @@ app.get('*', (req, res) => {
 });
 
 const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
-  console.log(`🌐 Acesse: http://localhost:${PORT}`);
+  console.log(` Servidor rodando na porta ${PORT}`);
+  console.log(` Acesse: http://localhost:${PORT}`);
   
   // Iniciar backup automático (a cada 24 horas)
   const backup = require('./utils/backup');
   backup.agendarBackupAutomatico(24);
-  console.log('💾 Backup automático ativado (a cada 24 horas)');
+  console.log(' Backup automático ativado (a cada 24 horas)');
 
   // Iniciar envio automático de emails de aniversário (diário às 8h)
   agendarEmailsAniversario();
-  console.log('🎂 Emails de aniversário agendados (diário às 8h)');
+  console.log(' Emails de aniversário agendados (diário às 8h)');
 });
 
 // Função para agendar emails de aniversário
@@ -125,19 +125,19 @@ function agendarEmailsAniversario() {
       `, [`${mes}-${dia}`]);
 
       if (aniversariantes.length > 0) {
-        console.log(`🎂 Encontrados ${aniversariantes.length} aniversariante(s) hoje`);
+        console.log(`Encontrados ${aniversariantes.length} aniversariante(s) hoje`);
 
         for (const usuario of aniversariantes) {
           try {
             await emailService.enviarEmailAniversario(usuario);
-            console.log(`✉️ Email de aniversário enviado para ${usuario.nome}`);
+            console.log(` Email de aniversário enviado para ${usuario.nome}`);
           } catch (error) {
-            console.error(`❌ Erro ao enviar email para ${usuario.nome}:`, error.message);
+            console.error(`Erro ao enviar email para ${usuario.nome}:`, error.message);
           }
         }
       }
     } catch (error) {
-      console.error('❌ Erro ao processar aniversariantes:', error.message);
+      console.error(' Erro ao processar aniversariantes:', error.message);
     }
   };
 
@@ -166,13 +166,13 @@ function agendarEmailsAniversario() {
 
 // Tratamento de erros não capturados
 process.on('uncaughtException', (error) => {
-  console.error('❌ Erro não capturado:', error);
+  console.error(' Erro não capturado:', error);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Promise rejeitada não tratada:', reason);
+  console.error(' Promise rejeitada não tratada:', reason);
 });
 
 server.on('error', (error) => {
-  console.error('❌ Erro no servidor:', error);
+  console.error(' Erro no servidor:', error);
 });
