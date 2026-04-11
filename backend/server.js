@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
-console.log('📂 Carregando rotas...');
+console.log(' Carregando rotas...');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const donationRoutes = require('./routes/donations');
@@ -25,7 +25,7 @@ const campanhasRoutes = require('./routes/campanhas');
 const exportExcelRoutes = require('./routes/export-excel');
 const twoFactorRoutes = require('./routes/2fa');
 
-console.log('⚙️ Iniciando Express...');
+console.log(' Iniciando Express...');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -60,7 +60,7 @@ app.use('/api/membros', membrosRoutes);
 app.use('/api/campanhas', campanhasRoutes);
 app.use('/api/export', exportExcelRoutes);
 app.use('/api/2fa', twoFactorRoutes);
-console.log('✅ Rotas registradas');
+console.log(' Rotas registradas');
 
 // Rota de saúde da API
 app.get('/api/health', (req, res) => {
